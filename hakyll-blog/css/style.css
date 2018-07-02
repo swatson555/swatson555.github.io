@@ -125,12 +125,10 @@ section.articles div.right p {
     section.articles div.left {
         width: 376px;
         height: 326px;
-        margin-left: 0px;
     }
     section.articles div.right {
         width: 376px;
         height: 326px;
-        margin-right: 0px;
     }
 }
 
@@ -163,6 +161,6 @@ section.articles div.right p {
 
     section.articles div.left {
         width: 90vw;
-        margin-left: 0px;
+        margin-right: 0px;
     }
 }
