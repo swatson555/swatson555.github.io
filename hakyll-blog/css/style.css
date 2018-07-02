@@ -121,6 +121,19 @@ section.articles div.right p {
 }
 
 
+@media only screen and (min-width: 1600px) {
+    section.articles div.left {
+        width: 376px;
+        height: 326px;
+        margin-left: 0px;
+    }
+    section.articles div.right {
+        width: 376px;
+        height: 326px;
+        margin-right: 0px;
+    }
+}
+
 
 /*
     MOBILE
