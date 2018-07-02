@@ -44,6 +44,7 @@ section.articles h2 {
     color: #F2F2F2;
 
     font-family: 'Noto Sans', sans-serif;
+    font-size: 1.70em;
 
     margin-left: 10px;
     margin-right: 10px;
@@ -66,7 +67,7 @@ section.articles time {
     font-family: 'Noto Sans', sans-serif;
     font-style: italic;
     font-weight: lighter;
-    font-size: 0.85em;
+    font-size: 0.90em;
 
     margin-top: 4px;
     margin-left: 10px;
