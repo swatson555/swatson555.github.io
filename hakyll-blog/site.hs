@@ -5,7 +5,7 @@ import Text.Pandoc
 
 
 config = defaultConfiguration
-    { deployCommand = "rsync --checksum -a ./_site/. ../"
+    { deployCommand = "rsync --checksum -a _site/. ../"
     }
 
 
