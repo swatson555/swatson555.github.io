@@ -43,7 +43,7 @@ section.articles h2 {
     color: #F2F2F2;
 
     font-family: 'Noto Sans', sans-serif;
-    font-size: 1.70em;
+    font-size: 1.75em;
 
     margin-left: 10px;
     margin-right: 10px;
@@ -93,6 +93,7 @@ section.articles div.right {
     overflow: hidden;
 
     color: #404040;
+    font-size: 1.06em;
     font-family: 'Noto Serif', serif;
 
     float: right;
