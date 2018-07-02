@@ -1,7 +1,7 @@
 ---
 img: redwood.jpg
 title: Carpe Diem
-abstract: Fusce tortor quam, egestas in posuere quis, porttitor vel turpis. Donec vulputate porttitor augue at rhoncus. Proin iaculis consectetur sagittis. Curabitur venenatis turpis sit amet purus tristique nec posuere risus laoreet. Nullam nisi sem, dapibus id semper id, egestas vel arcu. Morbi porttitor ipsum placerat erat consequat sed consequat purus feugiat. Donec auctor elit ut risus mattis facilisis. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+abstract: Mauris in lorem nisl. Maecenas tempus facilisis ante, eget viverra nisl tincidunt et. Donec turpis lectus, mattis ac malesuada a, accumsan eu libero. Morbi condimentum, tortor et tincidunt ullamcorper, sem quam pretium nulla, id convallis lectus libero nec turpis. Proin dapibus nisi id est sodales nec ultrices tortor pellentesque. Vivamus vel nisi ac lacus sollicitudin vulputate ac ut ligula.
 ---
 Proin vulputate sapien facilisis leo ornare pulvinar. Fusce tempus massa a risus
 semper iaculis. Suspendisse sollicitudin posuere nunc, sit amet rutrum leo

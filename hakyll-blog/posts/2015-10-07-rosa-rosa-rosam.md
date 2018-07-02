@@ -1,7 +1,7 @@
 ---
 img: mnt_shasta.jpg
 title: Rosa Rosa Rosam
-abstract: Suspendisse pharetra ullamcorper sem et auctor. Suspendisse vitae tellus euturpis dignissim gravida ut ut tortor. Cum sociis natoque penatibus et magnisdis parturient montes, nascetur ridiculus mus. Morbi aliquam sapien quis nislsodales non aliquet nisl iaculis. Curabitur fermentum orci vel sapien pellentesque id condimentum metus vehicula. Curabitur turpis purus, scelerisque at interdum quis, placerat sit amet tortor. Aliquam erat volutpat.
+abstract: Mauris in lorem nisl. Maecenas tempus facilisis ante, eget viverra nisl tincidunt et. Donec turpis lectus, mattis ac malesuada a, accumsan eu libero. Morbi condimentum, tortor et tincidunt ullamcorper, sem quam pretium nulla, id convallis lectus libero nec turpis. Proin dapibus nisi id est sodales nec ultrices tortor pellentesque. Vivamus vel nisi ac lacus sollicitudin vulputate ac ut ligula.
 ---
 Integer posuere felis non arcu suscipit ullamcorper. Nam tempus risus venenatis
 orci sagittis eu aliquam ante tincidunt. Aenean vehicula ipsum id sapien

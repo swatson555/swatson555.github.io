@@ -61,7 +61,7 @@ article p {
 }
 
 article blockquote {
-    border-left: solid #F6503D 4px;
+    border-left: solid #8C8979 4px;
     margin-left: 0px;
 }
 
@@ -120,11 +120,8 @@ article header nav {
 /*
 Figures
 */
-article figure figcaption {
-    color: #404040;
-}
 
-article figure img {
+article img {
     backface-visibility: hidden;
     box-sizing: border-box;
     display: block;
