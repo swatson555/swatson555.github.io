@@ -139,3 +139,24 @@ section.articles div.right p {
         margin-left: 0px;
     }
 }
+
+
+@media screen
+  and (max-device-width: 360px)
+  and (max-device-height: 640px)
+  and (-webkit-device-pixel-ratio: 2) {
+    section.articles {
+        grid-template-columns: 1fr;
+        grid-row-gap: 20px;
+    }
+
+    section.articles div.right {
+        display: none;
+    }
+
+    section.articles div.left {
+        width: 45vw;
+        height: 240px;
+        margin-left: 0px;
+    }
+}
