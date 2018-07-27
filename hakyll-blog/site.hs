@@ -1,7 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 import Data.Monoid (mappend)
 import Hakyll
 import Text.Pandoc
+
+feedConfig = FeedConfiguration
+    { feedTitle       = "Steven's Blog"
+    , feedDescription = "My personal blog."
+    , feedAuthorName  = "Steven Watson"
+    , feedAuthorEmail = "16228203+steven741@users.noreply.github.com"
+    , feedRoot        = "https://steven741.github.io"
+    }
 
 
 config = defaultConfiguration
@@ -14,7 +23,7 @@ loadPostWriter = do
 
     return defaultHakyllWriterOptions
         { writerTableOfContents = True
-        , writerTOCDepth        = 3
+        , writerTOCDepth        = 1
         , writerTemplate        = Just template
         }
 
@@ -41,6 +50,9 @@ main = do
             compile compressCssCompiler
 
         match "posts/*" $ do
+            route idRoute
+
+        match "posts/*" $ do
             route $ setExtension "html"
             compile $ pandocCompilerWith defaultHakyllReaderOptions postWriter
                 >>= loadAndApplyTemplate "templates/article.html" postCtx
@@ -61,3 +73,12 @@ main = do
                     >>= applyAsTemplate indexCtx
                     >>= loadAndApplyTemplate "templates/default.html" indexCtx
                     >>= relativizeUrls
+
+        create ["rss.xml"] $ do
+            route idRoute
+            compile $ do
+                posts <- fmap (take 10) . recentFirst =<< loadAll "posts/*"
+
+                renderRss feedConfig
+                          (defaultContext `mappend` constField "description" "")
+                          posts

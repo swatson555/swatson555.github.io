@@ -7,7 +7,12 @@
 
 <section class="articles">
     $for(posts)$
-    <div class="article"><a href="$url$" target="_self">
+    <div class="article">
+        <span><h2>$title$</h2></span>
+        <time datetime="$datetime$">$date$</time>
+    </div>
+
+    <!-- <div class="article"><a href="$url$" target="_self">
         <div class="left" style="background: url('/img/$img$'); background-size: cover;">
             <span><h2>$title$</h2></span>
             <span><time datetime="$datetime$">$date$</time></span>
@@ -15,6 +20,6 @@
         <div class="right">
             <p>$abstract$</p>
         </div>
-    </a></div>
+    </a></div> -->
     $endfor$
 </section>
