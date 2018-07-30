@@ -1,19 +1,8 @@
 ---
 img: n/a
 title: n/a
-abstract: |
-    this is a 2 paragraph absrtact
-    <br>
-    this is the second paragraph
+abstract: n/a
 ---
-# Header 1
-n/a
-
-# Header 1
-n/a
-
-# Header 1
-n/a
 
 # Header 1
 n/a
@@ -31,6 +20,8 @@ n/a
 n/a
 
 ###### Header 6
+n/a
+
 This paragraph has *emphasis*. This is with **strong emphasis**. This is ~~strikeout~~. H~2~O is a liquid.  2^10^ is 1024.
 
 ![Dreamcast Motherboard](../img/dreamcast-mobo-top.jpg "")
@@ -39,8 +30,8 @@ This paragraph has *emphasis*. This is with **strong emphasis**. This is ~~strik
 
 This is a block qoutation:
 
-> Be me.
-> ohno.jpg
+> This is
+> a block qoute.
 
 
 [This is a link](https://google.com)

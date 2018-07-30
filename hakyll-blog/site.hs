@@ -6,7 +6,7 @@ import Text.Pandoc
 
 feedConfig = FeedConfiguration
     { feedTitle       = "Steven's Blog"
-    , feedDescription = "My personal blog."
+    , feedDescription = "This the homepage and blog of Steven Watson."
     , feedAuthorName  = "Steven Watson"
     , feedAuthorEmail = "16228203+steven741@users.noreply.github.com"
     , feedRoot        = "https://steven741.github.io"
@@ -31,7 +31,6 @@ loadPostWriter = do
 postCtx =
     dateField "date" "%B %d, %Y"     `mappend`
     dateField "datetime" "%Y-%m-%d"  `mappend`
-    constField "style" "article.css" `mappend`
     defaultContext
 
 
@@ -49,10 +48,7 @@ main = do
             route   idRoute
             compile compressCssCompiler
 
-        match "posts/*" $ do
-            route idRoute
-
-        match "posts/*" $ do
+        match "posts/**" $ do
             route $ setExtension "html"
             compile $ pandocCompilerWith defaultHakyllReaderOptions postWriter
                 >>= loadAndApplyTemplate "templates/article.html" postCtx
@@ -62,11 +58,10 @@ main = do
         match "index.html" $ do
             route idRoute
             compile $ do
-                posts <- recentFirst =<< loadAll "posts/*"
+                posts <- recentFirst =<< loadAll "posts/**"
                 let indexCtx =
                         listField "posts" postCtx (return posts) `mappend`
                         constField "title" "Steven's Journal"    `mappend`
-                        constField "style" "style.css"           `mappend`
                         defaultContext
 
                 getResourceBody
@@ -77,7 +72,7 @@ main = do
         create ["rss.xml"] $ do
             route idRoute
             compile $ do
-                posts <- fmap (take 10) . recentFirst =<< loadAll "posts/*"
+                posts <- fmap (take 10) . recentFirst =<< loadAll "posts/**"
 
                 renderRss feedConfig
                           (defaultContext `mappend` constField "description" "")
