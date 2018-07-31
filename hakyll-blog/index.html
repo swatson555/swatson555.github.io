@@ -4,7 +4,11 @@
         <a href="$url$" target="_self">
         <span><h2>$title$</h2></span><br>
         <time datetime="$datetime$">$date$</time><br>
+        $if(img)$
         <img src='/img/$img$'></img></a>
+        $else$
+        </a>
+        $endif$
         <p>$abstract$</p>
     </div>
     $endfor$

@@ -11,7 +11,6 @@ Haskell allows one to write very elegant programs. Let's begin by looking at a p
 fac n =
   if n == 0 then 1 else n * fac (n-1)
 ```
->n
 ```haskell
 {-
  Calculate the hypotenuse of a and b.
