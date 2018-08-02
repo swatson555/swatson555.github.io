@@ -1,7 +1,7 @@
 ---
 img: philip.png
 title: Programming with Haskell
-abstract: Many absurdities have been written about the Haskell programming language. Talk of how Haskell is pure and, it's usage of monadic logic make Haskell confusing for the uninformed. This article aims to clarify the hyperbole that exists around the Haskell programming language by providing the reader with the insight necessary to understand such hyperbole. A basic understanding of functional programming is assumed.
+abstract: Haskell can be a daunting programming language for those outside of a certain knowledge circle. Talk of how Haskell is pure and, it's usage of monadic logic frustrate what is a wonderfully elegant programming language. This article aims to clarify the hyperbole that manifests around the Haskell programming language by providing the reader with the insight necessary to understand such hyperbole. A basic understanding of functional programming is assumed.
 ---
 # The Basics of Haskell
 
@@ -11,6 +11,11 @@ Haskell allows one to write very elegant programs. Let's begin by looking at a p
 fac n =
   if n == 0 then 1 else n * fac (n-1)
 ```
+
+Here we have a function of 1 argument. The function's definition is a single `if then else` statement. I don't want to dwell on this example for too long. It should be clear what's going on in this example by inspection. The important thing to note is how functions and if statements are defined.
+
+Let's look at a slightly more involved example that calculates the hypotenuse of it's 2 inputs. In this function we'll see an example of multi-line comments, a function of more than 1 argument, and the let-in clause.
+
 ```haskell
 {-
  Calculate the hypotenuse of a and b.
@@ -23,6 +28,15 @@ hyp a b =
   in
     sqrt (a' + b')
 ```
+
+Notice at the very top of this program that we have `{- -}`. These are how one would write multi-line comments. Later we'll see an example of single-line comments.
+
+The last function had a single argument. This function has 2 arguments. Note the syntax for that. The syntax takes the form `f arg1 arg2 arg3 ...` where the trailing ellipsis could be additional arguments.
+
+The body of this function is also quite different from our first example. Here we're using a let-in clause. We're saying let `a'` be a^2^ and, let `b'` be b^2^. Once we've defined `a'` and `b'` we can use them in an expresion. Here the expresion is `sqrt (a' + b')`.
+
+These small examples should feel straight forward. The next example will be far more involved. We'll be using a bisectional search to find the square root of some number x. This example will use a function defined locally within another function, single-line comments show up, the let-in and if statements make a return, and a new concept called a where clause will be introduced.
+
 ```haskell
 {-
  Find the sqrt of x.
@@ -50,6 +64,9 @@ sqrt' x =
         else
           rt
 ```
+
+tbd
+
 ```haskell
 {-
  Find the sqrt of x.
@@ -88,6 +105,7 @@ slowSqrt =
   sqrt' 0.0000000000001
 ```
 
+tbd
 
 # The Problem of Lazy Evaluation
 
