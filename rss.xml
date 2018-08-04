@@ -9,7 +9,7 @@
                    type="application/rss+xml" />
         <lastBuildDate>Sat, 28 Jul 2018 00:00:00 UT</lastBuildDate>
         <item>
-    <title>Programming in Haskell</title>
+    <title>Why We Need Monads</title>
     <link>https://steven741.github.io/posts/2018-07-28-haskell-tutorial-1.html</link>
     <description><![CDATA[]]></description>
     <pubDate>Sat, 28 Jul 2018 00:00:00 UT</pubDate>

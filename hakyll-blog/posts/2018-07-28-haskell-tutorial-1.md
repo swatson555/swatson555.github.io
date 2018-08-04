@@ -1,6 +1,6 @@
 ---
 img: philip.png
-title: Programming in Haskell
+title: Why We Need Monads
 abstract: Haskell can be a daunting programming language for those outside of a certain knowledge circle. Talk of how Haskell is pure and, it's usage of monads frustrate what is a wonderfully elegant programming language. This article aims to clarify the hyperbole that manifests around the Haskell programming language by providing the reader with the insight necessary to understand such hyperbole. A basic understanding of functional programming is assumed.
 ---
 # The Basics of Haskell
