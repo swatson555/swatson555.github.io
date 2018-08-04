@@ -1,7 +1,7 @@
 ---
 img: philip.png
 title: Why We Need Monads
-abstract: Monads are often a point of frustration for learners of Haskell. The question of a what a monad is leads to the question of why a monad is. The question of why a monad is leads to the question of what a monad is. It's been said that monads aren't necessary. This is wrong. It's time that these myths be debunked. This article seeks to answer the question of why a monad is.
+abstract: Monads are often a point of frustration for learners of Haskell. The question of what a monad is leads to the question of why a monad is. The question of why a monad is leads to the question of what a monad is. It's been said that monads aren't necessary. This is wrong. It's time that these myths be debunked. This article seeks to answer the question of why a monad is.
 ---
 # The Basics of Haskell
 
@@ -176,7 +176,7 @@ stdout:
 6
 ```
 
-Monads save the day. We can have our normal order evaluation and use it too.
+Monads save the day. We can have our normal order evaluation and use it too. This is why we need monads.
 
 # Further Reading
 * [Learn Haskell in 10 minutes](https://wiki.haskell.org/Learn_Haskell_in_10_minutes)
