@@ -1,7 +1,7 @@
 ---
 img: philip.png
 title: Why We Need Monads
-abstract: Haskell can be a daunting programming language for those outside of a certain knowledge circle. Talk of how Haskell is pure and, it's usage of monads frustrate what is a wonderfully elegant programming language. This article aims to clarify the hyperbole that manifests around the Haskell programming language by providing the reader with the insight necessary to understand such hyperbole. A basic understanding of functional programming is assumed.
+abstract: Monads are often a point of frustration for learners of Haskell. The question of a what a monad is leads to the question of why a monad is. The question of why a monad is leads to the question of what a monad is. It's been said that monads aren't necessary. This is wrong. It's time that these myths be debunked. This article seeks to answer the question of why a monad is.
 ---
 # The Basics of Haskell
 
