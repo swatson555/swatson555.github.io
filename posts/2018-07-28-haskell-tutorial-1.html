@@ -96,7 +96,7 @@
 <a class="sourceLine" id="cb4-6" data-line-number="6"> num <span class="fu">+</span> num</a>
 <a class="sourceLine" id="cb4-7" data-line-number="7"></a>
 <a class="sourceLine" id="cb4-8" data-line-number="8">doubleNum (numWithPrint <span class="dv">6</span>)</a></code></pre></div>
-<p>This is our setup. <code>numWithPrint</code> takes in a number, prints it to stdout, and returns the same number. So, <code>numWithPrint 6 = 6</code>, <code>numWithPrint 1 = 1</code>, etc. <code>doubleNum</code> just double it’s input. E.g. <code>doubleNum 4 = 8</code>. This is not valid Haskell code. We’ll find out why that is soon enough but, for now let’s use applicative order evaluation to evaluate <code>doubleNum (numWithPrint 6)</code>.</p>
+<p>This is our setup. <code>numWithPrint</code> takes in a number, prints it to stdout, and returns the same number. So, <code>numWithPrint 6 = 6</code>, <code>numWithPrint 1 = 1</code>, etc. <code>doubleNum</code> just doubles it’s input. E.g. <code>doubleNum 4 = 8</code>. This is not valid Haskell code. We’ll find out why that is soon enough but, for now let’s use applicative order evaluation to evaluate <code>doubleNum (numWithPrint 6)</code>.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="op">1&gt;</span> <span class="ex">doubleNum</span> (numWithPrint 6)</a>
 <a class="sourceLine" id="cb5-2" data-line-number="2"></a>
 <a class="sourceLine" id="cb5-3" data-line-number="3"><span class="co"># We evaluate the arguments of `doubleNum` first</span></a>
@@ -112,7 +112,7 @@
 <a class="sourceLine" id="cb5-13" data-line-number="13"><span class="ex">---</span></a>
 <a class="sourceLine" id="cb5-14" data-line-number="14"><span class="ex">stdout</span>:</a>
 <a class="sourceLine" id="cb5-15" data-line-number="15"><span class="ex">6</span></a></code></pre></div>
-<p>Do you see what’s happening here? We evaluate the function’s arguments first and, then substitute the result into the function’s body. <code>doubleNum (numWithPrint 6)</code> got reduced to <code>doubleNum 6</code> but, we have a side effect. The side effect was printing to stdout. Let’s look at what happens if we used normal order evaluation.</p>
+<p>Do you see what’s happening here? We evaluate the function’s arguments first and, substitute the result into the function’s body. <code>doubleNum (numWithPrint 6)</code> got reduced to <code>doubleNum 6</code> but, we have a side effect. The side effect was printing to stdout. Let’s look at what happens if we used normal order evaluation.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="op">1&gt;</span> <span class="ex">doubleNum</span> (numWithPrint 6)</a>
 <a class="sourceLine" id="cb6-2" data-line-number="2"></a>
 <a class="sourceLine" id="cb6-3" data-line-number="3"><span class="co"># We substitute the arguments of `doubleNum` first</span></a>
@@ -141,7 +141,7 @@
 <a class="sourceLine" id="cb7-8" data-line-number="8"></a>
 <a class="sourceLine" id="cb7-9" data-line-number="9">doubleNum (numWithPrint <span class="dv">6</span>)</a></code></pre></div>
 <p>The first thing that one needs to understand is the do-return macro. Look at <code>numWithPrint</code> after the <code>=</code> there’s a <code>do</code>. This begins the do-return macro. The last line of this function is a <code>return</code>. What are we returning? A monad! No longer is <code>numWithPrint 6 = 6</code> a true statement. Rather <code>numWithPrint 6 = IO 6</code> is what we have here.</p>
-<p>This is quite good because <code>doubleNum</code> only accepts a number wrapped in a monad. Unfortunately, we can’t just add 2 monads. It doesn’t work that way. We need to unwrap our monad and, then add them. That’s what <code>num &lt;- ioNum</code> does. It takes the monad <code>ioNum</code> and, binds it’s value to <code>num</code>. Now <code>num</code> is just a regular number. We can double it and, return it back out as a monad.</p>
+<p>This is quite good because <code>doubleNum</code> only accepts a number wrapped in a monad. Unfortunately, we can’t just add 2 monads. It doesn’t work that way. We need to unwrap our monad and add them. That’s what <code>num &lt;- ioNum</code> does. It takes the monad <code>ioNum</code> and, binds it’s value to <code>num</code>. Now <code>num</code> is just a regular number. We can double it and, return it back out as a monad.</p>
 <p>This is valid haskell code. It isn’t as nice looking as before but, it’ll get the job done. Let’s look at this using normal order evaluation. There is one caveat about this analysis. You may have noticed I called do-return a macro. It’s useful to see what do-return expands to however, I won’t be expanding the do-return macro here.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="op">1&gt;</span> <span class="ex">doubleNum</span> (numWithPrint 6)</a>
 <a class="sourceLine" id="cb8-2" data-line-number="2"><span class="op">2&gt;</span> <span class="ex">doubleNum</span> (print 6<span class="kw">;</span> <span class="bu">return</span> 6)</a>

@@ -91,7 +91,7 @@ doubleNum num =
 doubleNum (numWithPrint 6)
 ```
 
-This is our setup. `numWithPrint` takes in a number, prints it to stdout, and returns the same number. So, `numWithPrint 6 = 6`, `numWithPrint 1 = 1`, etc. `doubleNum` just double it's input. E.g. `doubleNum 4 = 8`. This is not valid Haskell code. We'll find out why that is soon enough but, for now let's use applicative order evaluation to evaluate `doubleNum (numWithPrint 6)`.
+This is our setup. `numWithPrint` takes in a number, prints it to stdout, and returns the same number. So, `numWithPrint 6 = 6`, `numWithPrint 1 = 1`, etc. `doubleNum` just doubles it's input. E.g. `doubleNum 4 = 8`. This is not valid Haskell code. We'll find out why that is soon enough but, for now let's use applicative order evaluation to evaluate `doubleNum (numWithPrint 6)`.
 
 ```bash
 1> doubleNum (numWithPrint 6)
@@ -111,7 +111,7 @@ stdout:
 6
 ```
 
-Do you see what's happening here? We evaluate the function's arguments first and, then substitute the result into the function's body. `doubleNum (numWithPrint 6)` got reduced to `doubleNum 6` but, we have a side effect. The side effect was printing to stdout. Let's look at what happens if we used normal order evaluation.
+Do you see what's happening here? We evaluate the function's arguments first and, substitute the result into the function's body. `doubleNum (numWithPrint 6)` got reduced to `doubleNum 6` but, we have a side effect. The side effect was printing to stdout. Let's look at what happens if we used normal order evaluation.
 
 ```bash
 1> doubleNum (numWithPrint 6)
@@ -150,7 +150,7 @@ doubleNum (numWithPrint 6)
 
 The first thing that one needs to understand is the do-return macro. Look at `numWithPrint` after the `=` there's a `do`. This begins the do-return macro. The last line of this function is a `return`. What are we returning? A monad! No longer is `numWithPrint 6 = 6` a true statement. Rather `numWithPrint 6 = IO 6` is what we have here.
 
-This is quite good because `doubleNum` only accepts a number wrapped in a monad. Unfortunately, we can't just add 2 monads. It doesn't work that way. We need to unwrap our monad and, then add them. That's what `num <- ioNum` does. It takes the monad `ioNum` and, binds it's value to `num`. Now `num` is just a regular number. We can double it and, return it back out as a monad.
+This is quite good because `doubleNum` only accepts a number wrapped in a monad. Unfortunately, we can't just add 2 monads. It doesn't work that way. We need to unwrap our monad and add them. That's what `num <- ioNum` does. It takes the monad `ioNum` and, binds it's value to `num`. Now `num` is just a regular number. We can double it and, return it back out as a monad.
 
 This is valid haskell code. It isn't as nice looking as before but, it'll get the job done. Let's look at this using normal order evaluation. There is one caveat about this analysis. You may have noticed I called do-return a macro. It's useful to see what do-return expands to however, I won't be expanding the do-return macro here.
 
