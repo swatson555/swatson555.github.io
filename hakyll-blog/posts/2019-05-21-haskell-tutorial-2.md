@@ -15,7 +15,7 @@ These 3 laws are:
 * Right identity
 * Associativity
 
-In Haskell, we might choose to represent the interface as the follows.
+In Haskell, we might choose to represent the interface as the following.
 
 ```haskell
 class Monad m where

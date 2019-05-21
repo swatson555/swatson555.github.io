@@ -48,7 +48,7 @@
 <li>Right identity</li>
 <li>Associativity</li>
 </ul>
-<p>In Haskell, we might choose to represent the interface as the follows.</p>
+<p>In Haskell, we might choose to represent the interface as the following.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">class</span> <span class="dt">Monad</span> m <span class="kw">where</span></a>
 <a class="sourceLine" id="cb1-2" data-line-number="2"><span class="ot">  return ::</span>   a               <span class="ot">-&gt;</span> m a <span class="co">--This is unit</span></a>
 <a class="sourceLine" id="cb1-3" data-line-number="3"><span class="ot">  (&gt;&gt;=)  ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b <span class="co">--This is bind</span></a></code></pre></div>
