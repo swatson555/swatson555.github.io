@@ -104,7 +104,7 @@
 <a class="sourceLine" id="cb6-9" data-line-number="9"><span class="co">-- or</span></a>
 <a class="sourceLine" id="cb6-10" data-line-number="10"></a>
 <a class="sourceLine" id="cb6-11" data-line-number="11">bind get put</a></code></pre></div>
-<p>Here I have 3 ways of doing the same thing. Top-most example is the most sugared. The bottom-most example has no sugar. The unsugared example is the most useful to us since this is what will actually be evaluated. We evaluate from left to right. So, evaluate <code>get</code>. Then evaluate <code>put</code> with the value of <code>get</code>. That’s not so bad. Let’s look at a more complicated example.</p>
+<p>Here I have 3 ways of doing the same thing. The top-most example is the most sugared. The bottom-most example has no sugar. The unsugared example is the most useful to us since this is what will actually be evaluated. We evaluate from left to right. So, evaluate <code>get</code>. Then evaluate <code>put</code> with the value of <code>get</code>. That’s not so bad. Let’s look at a more complicated example.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw">do</span></a>
 <a class="sourceLine" id="cb7-2" data-line-number="2">  a <span class="ot">&lt;-</span> unit <span class="dv">97</span></a>
 <a class="sourceLine" id="cb7-3" data-line-number="3">  c <span class="ot">&lt;-</span> get</a>

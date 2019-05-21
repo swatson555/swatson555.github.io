@@ -101,7 +101,7 @@ bind get (\c -> put c)
 bind get put
 ```
 
-Here I have 3 ways of doing the same thing. Top-most example is the most sugared. The bottom-most example has no sugar. The unsugared example is the most useful to us since this is what will actually be evaluated. We evaluate from left to right. So, evaluate `get`. Then evaluate `put` with the value of `get`. That's not so bad. Let's look at a more complicated example. 
+Here I have 3 ways of doing the same thing. The top-most example is the most sugared. The bottom-most example has no sugar. The unsugared example is the most useful to us since this is what will actually be evaluated. We evaluate from left to right. So, evaluate `get`. Then evaluate `put` with the value of `get`. That's not so bad. Let's look at a more complicated example. 
 
 ```haskell
 do
