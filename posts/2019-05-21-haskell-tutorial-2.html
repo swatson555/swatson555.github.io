@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="description" content="Monads are often a point of frustration for learners of Haskell. The question of what a monad is leads to the question of why a monad is. The question of why a monad is leads to the question of what a monad is. It's been said that the IO monad is special. This is wrong. It's time that these myths be debunked. This article seeks to answer the question of what a monad is.">
+
+<title>What Is A Monad?</title>
+<link href="../css/syntax.css" rel="stylesheet">
+<link href="../css/style.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Noto+Sans|Noto+Serif" rel="stylesheet">
+</head>
+<body>
+<nav class="header">
+<span><a href="../" target="_self"><h1>Steven Watson's<br>Personal Journal</h1></a></span>
+<ul>
+<li><a href="https://github.com/steven741/" target="_self"><span>repos</span></a></li>
+</ul>
+</nav>
+<article>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<header>
+<h1>What Is A Monad?</h1>
+<time datetime="2019-05-21">May 21, 2019</time>
+
+<p>Monads are often a point of frustration for learners of Haskell. The question of what a monad is leads to the question of why a monad is. The question of why a monad is leads to the question of what a monad is. It's been said that the IO monad is special. This is wrong. It's time that these myths be debunked. This article seeks to answer the question of what a monad is.</p>
+
+<hr>
+    <nav>
+        <h2>Table of Contents</h2>
+        <ul>
+        <li><a href="#what-a-monad-is">What A Monad Is</a></li>
+        <li><a href="#the-io-monad">The IO Monad</a></li>
+        <li><a href="#further-reading">Further Reading</a></li>
+        </ul>
+    </nav>
+</header>
+<h1 id="what-a-monad-is">What A Monad Is</h1>
+<p>A monad is an interface of 2 functions where 3 laws are satisfied. These 2 functions are:</p>
+<ul>
+<li>unit</li>
+<li>bind</li>
+</ul>
+<p>These 3 laws are:</p>
+<ul>
+<li>Left identity</li>
+<li>Right identity</li>
+<li>Associativity</li>
+</ul>
+<p>In Haskell, we might choose to represent the interface as the follows.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">class</span> <span class="dt">Monad</span> m <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="ot">  return ::</span>   a               <span class="ot">-&gt;</span> m a <span class="co">--This is unit</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="ot">  (&gt;&gt;=)  ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b <span class="co">--This is bind</span></a></code></pre></div>
+<p>Here I’m referring to <code>unit</code> as <code>return</code> and to <code>bind</code> as <code>&gt;&gt;=</code>. These names are the typical way to refer to these concepts in Haskell programming.</p>
+<p>It’s important to understand that these types alone are not what make something a monad. A monad is more truly defined by it’s laws. What the laws mean in this context follows.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1">return a  <span class="fu">&gt;&gt;=</span> f      <span class="fu">==</span> f a                     <span class="co">--Left identity</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">m         <span class="fu">&gt;&gt;=</span> return <span class="fu">==</span> m                       <span class="co">--Right identity</span></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">(m <span class="fu">&gt;&gt;=</span> f) <span class="fu">&gt;&gt;=</span> g      <span class="fu">==</span> m <span class="fu">&gt;&gt;=</span> (\x <span class="ot">-&gt;</span> f x <span class="fu">&gt;&gt;=</span> g) <span class="co">--Associativity</span></a></code></pre></div>
+<p>Actually, it’s hard to see that these laws are even being satisfied so, let’s look at this in a slightly different way.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="ot">(&gt;=&gt;) ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> (b <span class="ot">-&gt;</span> m c) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> m c</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">(m <span class="fu">&gt;=&gt;</span> n) x <span class="fu">=</span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">  m x <span class="fu">&gt;&gt;=</span> n</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5"><span class="co">-- therefore, if this is a monad the following will be true.</span></a>
+<a class="sourceLine" id="cb3-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">return    <span class="fu">&gt;=&gt;</span> g      <span class="fu">==</span> g               <span class="co">--Left identity</span></a>
+<a class="sourceLine" id="cb3-8" data-line-number="8">f         <span class="fu">&gt;=&gt;</span> return <span class="fu">==</span> f               <span class="co">--Right identity</span></a>
+<a class="sourceLine" id="cb3-9" data-line-number="9">(f <span class="fu">&gt;=&gt;</span> g) <span class="fu">&gt;=&gt;</span> h      <span class="fu">==</span> f <span class="fu">&gt;=&gt;</span> (g <span class="fu">&gt;=&gt;</span> h) <span class="co">--Associativity</span></a></code></pre></div>
+<p>Ah, now we can see these properties far more clearly. The <code>&gt;=&gt;</code> is called a Kleisli composition operator.</p>
+<p>If you’ve made it to this point you may be thinking “Why? What’s the point of this?” The answer to that question is explored in <a href="https://steven741.github.io/posts/2018-07-28-haskell-tutorial-1.html">Why We Need Monads</a> but, to make this article complete I’ll say it here. It turns out monads are useful for managing side-effects in programs that are evaluated using normal order.</p>
+<p>Well. This is exceptionally complicated. This is truly confusing. How can one make sense of this? Unfortunately, the only way is practice. You won’t fully understand monads by reading this article. <a href="https://www.quora.com/Euclid-wrote-There-is-no-royal-road-to-geometry-What-does-this-mean-to-you">There’s no royal path to geometry</a> and, there’s no royal path to monads.</p>
+<p>With this being the case it would be useful to know what monads aren’t. Monads aren’t a design pattern. Monads aren’t a typeclass. Monads aren’t incomprehendable. What makes something a monad, principally, are the 3 monad laws. The type of unit and bind necessarily come from the monad laws. However, it’s important to realize that the type alone isn’t enough for something to be a monad. Indeed, one can implement the monad interface and, not have something that satisfies the monad laws. For this reason it’s also not a design pattern.</p>
+<p>What monads are like is a more structured form of currying. It’s a form of composition. What that means is quite involved. However, let’s not worry about this. You already know what a monad is in some sense. It’s that interface and laws. More importantly it’s those laws. Understanding those laws are really essential to understanding monads.</p>
+<h1 id="the-io-monad">The IO Monad</h1>
+<p>It would be useful to see a monad in action. It’s been said that the IO monad is special. It’s been said that it’s a monad that’s internal to the compiler and, can’t be implemented by a typical program. Not only is this untrue but, the IO monad is in fact the simplest monad which exists. To that end, let’s implement the IO monad.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">data</span> <span class="dt">IO</span> a <span class="fu">=</span> <span class="dt">IO</span> a <span class="kw">deriving</span> <span class="dt">Show</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="kw">class</span> <span class="dt">Monad</span> m <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4"><span class="ot">  unit ::</span>   a               <span class="ot">-&gt;</span> m a</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5"><span class="ot">  bind ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b</a>
+<a class="sourceLine" id="cb4-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb4-7" data-line-number="7"><span class="kw">instance</span> <span class="dt">Monad</span> <span class="dt">IO</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-8" data-line-number="8">  unit a        <span class="fu">=</span> <span class="dt">IO</span> a</a>
+<a class="sourceLine" id="cb4-9" data-line-number="9">  bind (<span class="dt">IO</span> a) f <span class="fu">=</span> f a</a></code></pre></div>
+<p>That’s it. That’s all the IO monad is. It’s literally just it’s construction and no more. With this we can use functions with side effects. Let’s take a look at that.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1">foreign <span class="kw">import</span> ccall unsafe &quot;getchar&quot; get' :: <span class="dt">Int</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">foreign <span class="kw">import</span> ccall unsafe &quot;putchar&quot; put' :: <span class="dt">Int</span> -&gt; <span class="dt">Int</span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4"><span class="ot">get ::</span> <span class="dt">IO</span> <span class="dt">Int</span></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">get <span class="fu">=</span> <span class="dt">IO</span> get'</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb5-7" data-line-number="7"><span class="ot">put ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> <span class="dt">Int</span></a>
+<a class="sourceLine" id="cb5-8" data-line-number="8">put c <span class="fu">=</span> <span class="dt">IO</span> (put' c)</a></code></pre></div>
+<p>Here we’re calling out to some C code and, wrapping the results of the call in our monad. That’s all we have to do. Let’s use this. Let’s get a character from stdin and write it back to stdout.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">do</span></a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">  c <span class="ot">&lt;-</span> get</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">  put c</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb6-5" data-line-number="5"><span class="co">-- or</span></a>
+<a class="sourceLine" id="cb6-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb6-7" data-line-number="7">bind get (\c <span class="ot">-&gt;</span> put c)</a>
+<a class="sourceLine" id="cb6-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb6-9" data-line-number="9"><span class="co">-- or</span></a>
+<a class="sourceLine" id="cb6-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb6-11" data-line-number="11">bind get put</a></code></pre></div>
+<p>Here I have 3 ways of doing the same thing. Top-most example is the most sugared. The bottom-most example has no sugar. The unsugared example is the most useful to us since this is what will actually be evaluated. We evaluate from left to right. So, evaluate <code>get</code>. Then evaluate <code>put</code> with the value of <code>get</code>. That’s not so bad. Let’s look at a more complicated example.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw">do</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">  a <span class="ot">&lt;-</span> unit <span class="dv">97</span></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">  c <span class="ot">&lt;-</span> get</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">  put a</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">  put c</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb7-7" data-line-number="7"><span class="co">-- or</span></a>
+<a class="sourceLine" id="cb7-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb7-9" data-line-number="9">bind (unit <span class="dv">97</span>)</a>
+<a class="sourceLine" id="cb7-10" data-line-number="10">     (\a <span class="ot">-&gt;</span> bind get</a>
+<a class="sourceLine" id="cb7-11" data-line-number="11">                 (\c <span class="ot">-&gt;</span> bind (put a)</a>
+<a class="sourceLine" id="cb7-12" data-line-number="12">		             (\_ <span class="ot">-&gt;</span> put c)))</a></code></pre></div>
+<p>Now this is interesting. The top example looks just like an imperatively defined program but, our desugared version is clearly just one expression. Evaluating this expression will be hard so let’s walk through it in peices.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1">bind (unit <span class="dv">97</span>)</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">     (\a <span class="ot">-&gt;</span> bind get</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">                 (\c <span class="ot">-&gt;</span> bind (put a)</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">		             (\_ <span class="ot">-&gt;</span> put c)))</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb8-6" data-line-number="6"><span class="co">-- \a is now 97</span></a>
+<a class="sourceLine" id="cb8-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb8-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb8-9" data-line-number="9">bind get</a>
+<a class="sourceLine" id="cb8-10" data-line-number="10">     (\c <span class="ot">-&gt;</span> bind (put a)</a>
+<a class="sourceLine" id="cb8-11" data-line-number="11">                 (\_ <span class="ot">-&gt;</span> put c))</a>
+<a class="sourceLine" id="cb8-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb8-13" data-line-number="13"><span class="co">-- \c is now the result of `get`</span></a>
+<a class="sourceLine" id="cb8-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb8-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb8-16" data-line-number="16">bind (put a)</a>
+<a class="sourceLine" id="cb8-17" data-line-number="17">     (\_ <span class="ot">-&gt;</span> put c)</a>
+<a class="sourceLine" id="cb8-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb8-19" data-line-number="19"><span class="co">-- \_ is now the result of `put a`</span></a>
+<a class="sourceLine" id="cb8-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb8-21" data-line-number="21"></a>
+<a class="sourceLine" id="cb8-22" data-line-number="22">\_ <span class="ot">-&gt;</span> put c</a>
+<a class="sourceLine" id="cb8-23" data-line-number="23"></a>
+<a class="sourceLine" id="cb8-24" data-line-number="24"><span class="co">-- The expression is the result of `put c`</span></a></code></pre></div>
+<p>That’s it. That’s really what the IO monad is. Now, it’s significant to note that Haskell’s evaluation is memoized. That has consequences for functions with side-effects. But, this isn’t much of a problem. You could imagine a version of <code>foreign import ccall</code> that doesn’t memoize it’s results. Indeed, Haskell’s IO monad doesn’t memoize it’s results.</p>
+<p>So, what’s a monad? It’s complicated. It’s defined by abstract properties but, it can be useful for achiving certain results as was shown here.</p>
+<h1 id="further-reading">Further Reading</h1>
+<ul>
+<li><a href="https://wiki.haskell.org/Monad_laws">Monad laws</a></li>
+<li><a href="http://haskellbook.com/">Haskell Programming: from first principles</a></li>
+<li><a href="https://www.microsoft.com/en-us/research/publication/imperative-functional-programming/?from=http%3A%2F%2Fresearch.microsoft.com%2Fen-us%2Fum%2Fpeople%2Fsimonpj%2Fpapers%2Fimperative.ps.z">Imperative functional programming</a></li>
+<li><a href="https://www.microsoft.com/en-us/research/publication/type-classes-an-exploration-of-the-design-space/?from=http%3A%2F%2Fresearch.microsoft.com%2F%7Esimonpj%2Fpapers%2Ftype-class-design-space%2F">Type classes: an exploration of the design space</a></li>
+</ul>
+</article>
+<section>
+<h2>Reader Comments</h2>
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+var disqus_config = function () {
+this.page.url = "https://steven741.github.io/posts/2019-05-21-haskell-tutorial-2.html";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = "What Is A Monad?"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+var disqus_url = "https://steven741.github.io";
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://steven741.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+<footer>
+</footer>
+</body>
+</html>
