@@ -117,7 +117,7 @@
 <a class="sourceLine" id="cb7-10" data-line-number="10">     (\a <span class="ot">-&gt;</span> bind get</a>
 <a class="sourceLine" id="cb7-11" data-line-number="11">                 (\c <span class="ot">-&gt;</span> bind (put a)</a>
 <a class="sourceLine" id="cb7-12" data-line-number="12">		             (\_ <span class="ot">-&gt;</span> put c)))</a></code></pre></div>
-<p>Now this is interesting. The top example looks just like an imperatively defined program but, our desugared version is clearly just one expression. Evaluating this expression will be hard so let’s walk through it in peices.</p>
+<p>Now this is interesting. The top example looks just like an imperatively defined program but, our desugared version is clearly just one expression. Evaluating this expression will be hard so let’s walk through it in pieces.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1">bind (unit <span class="dv">97</span>)</a>
 <a class="sourceLine" id="cb8-2" data-line-number="2">     (\a <span class="ot">-&gt;</span> bind get</a>
 <a class="sourceLine" id="cb8-3" data-line-number="3">                 (\c <span class="ot">-&gt;</span> bind (put a)</a>

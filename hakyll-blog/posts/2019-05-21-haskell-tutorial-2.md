@@ -118,7 +118,7 @@ bind (unit 97)
 		             (\_ -> put c)))
 ```
 
-Now this is interesting. The top example looks just like an imperatively defined program but, our desugared version is clearly just one expression. Evaluating this expression will be hard so let's walk through it in peices.
+Now this is interesting. The top example looks just like an imperatively defined program but, our desugared version is clearly just one expression. Evaluating this expression will be hard so let's walk through it in pieces.
 
 ```haskell
 bind (unit 97)
