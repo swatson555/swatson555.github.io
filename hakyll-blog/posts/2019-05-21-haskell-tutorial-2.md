@@ -79,10 +79,10 @@ foreign import ccall unsafe "getchar" get' :: Int
 foreign import ccall unsafe "putchar" put' :: Int -> Int
 
 get :: IO Int
-get = IO get'
+get = unit get'
 
 put :: Int -> IO Int
-put c = IO (put' c)
+put c = unit (put' c)
 ```
 
 Here we're calling out to some C code and, wrapping the results of the call in our monad. That's all we have to do. Let's use this. Let's get a character from stdin and write it back to stdout.
