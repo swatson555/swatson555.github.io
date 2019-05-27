@@ -88,10 +88,10 @@
 <a class="sourceLine" id="cb5-2" data-line-number="2">foreign <span class="kw">import</span> ccall unsafe &quot;putchar&quot; put' :: <span class="dt">Int</span> -&gt; <span class="dt">Int</span></a>
 <a class="sourceLine" id="cb5-3" data-line-number="3"></a>
 <a class="sourceLine" id="cb5-4" data-line-number="4"><span class="ot">get ::</span> <span class="dt">IO</span> <span class="dt">Int</span></a>
-<a class="sourceLine" id="cb5-5" data-line-number="5">get <span class="fu">=</span> <span class="dt">IO</span> get'</a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">get <span class="fu">=</span> unit get'</a>
 <a class="sourceLine" id="cb5-6" data-line-number="6"></a>
 <a class="sourceLine" id="cb5-7" data-line-number="7"><span class="ot">put ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> <span class="dt">Int</span></a>
-<a class="sourceLine" id="cb5-8" data-line-number="8">put c <span class="fu">=</span> <span class="dt">IO</span> (put' c)</a></code></pre></div>
+<a class="sourceLine" id="cb5-8" data-line-number="8">put c <span class="fu">=</span> unit (put' c)</a></code></pre></div>
 <p>Here we’re calling out to some C code and, wrapping the results of the call in our monad. That’s all we have to do. Let’s use this. Let’s get a character from stdin and write it back to stdout.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">do</span></a>
 <a class="sourceLine" id="cb6-2" data-line-number="2">  c <span class="ot">&lt;-</span> get</a>
