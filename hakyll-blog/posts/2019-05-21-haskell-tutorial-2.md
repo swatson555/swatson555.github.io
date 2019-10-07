@@ -55,10 +55,10 @@ Well. This is exceptionally complicated. This is truly confusing. How can one ma
 
 With this being the case it would be useful to know what monads aren't. Monads aren't a design pattern. Monads aren't a typeclass. Monads aren't incomprehendable. What makes something a monad, principally, are the 3 monad laws. The type of unit and bind necessarily come from the monad laws. However, it's important to realize that the type alone isn't enough for something to be a monad. Indeed, one can implement the monad interface and, not have something that satisfies the monad laws. For this reason it's also not a design pattern.
 
-What monads are like is a more structured form of currying. It's a form of composition. What that means is quite involved. However, let's not worry about this. You already know what a monad is in some sense. It's that interface and laws. More importantly it's those laws. Understanding those laws are really essential to understanding monads.
+What monads are like is a more structured form of currying. It's a form of composition. A monad, by itself, preforms an action. These actions can be bound together with the bind operation. In similar kind to how 2 functions can be composed together. What makes it possible to bind these operations are the monadic laws.
 
 # The IO Monad
-It would be useful to see a monad in action. It's been said that the IO monad is special. It's been said that it's a monad that's internal to the compiler and, can't be implemented by a typical program. Not only is this untrue but, the IO monad is in fact the simplest monad which exists. To that end, let's implement the IO monad.
+It would be useful to see the underpenning of a monad. It's been said that the IO monad is special. It's been said that it's a monad that's internal to the compiler and, can't be implemented by a typical program. Not only is this untrue but, the IO monad is in fact the simplest monad which exists. To that end, let's implement the IO monad.
 
 ```haskell
 data IO a = IO a deriving Show
