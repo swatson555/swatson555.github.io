@@ -7,8 +7,16 @@
         <description><![CDATA[This the homepage and blog of Steven Watson.]]></description>
         <atom:link href="https://steven741.github.io/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Tue, 21 May 2019 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Tue, 19 Nov 2019 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Learning Engineering</title>
+    <link>https://steven741.github.io/posts/2019-11-19-learning-engineering.html</link>
+    <description><![CDATA[]]></description>
+    <pubDate>Tue, 19 Nov 2019 00:00:00 UT</pubDate>
+    <guid>https://steven741.github.io/posts/2019-11-19-learning-engineering.html</guid>
+    <dc:creator>Steven Watson</dc:creator>
+</item>
+<item>
     <title>What Is A Monad?</title>
     <link>https://steven741.github.io/posts/2019-05-21-haskell-tutorial-2.html</link>
     <description><![CDATA[]]></description>
