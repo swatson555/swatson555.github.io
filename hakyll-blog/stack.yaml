@@ -1,4 +1,7 @@
-resolver: lts-11.13
+resolver: lts-14.17
 
 packages:
 - .
+
+extra-deps:
+- hakyll-4.13.0.1
