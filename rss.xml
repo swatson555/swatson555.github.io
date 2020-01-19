@@ -7,8 +7,16 @@
         <description><![CDATA[This the homepage and blog of Steven Watson.]]></description>
         <atom:link href="https://steven741.github.io/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Tue, 21 May 2019 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Sat, 18 Jan 2020 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Roll A Lisp In C - Part 1</title>
+    <link>https://steven741.github.io/posts/2020-01-18-make-a-lisp-1.html</link>
+    <description><![CDATA[]]></description>
+    <pubDate>Sat, 18 Jan 2020 00:00:00 UT</pubDate>
+    <guid>https://steven741.github.io/posts/2020-01-18-make-a-lisp-1.html</guid>
+    <dc:creator>Steven Watson</dc:creator>
+</item>
+<item>
     <title>What Is A Monad?</title>
     <link>https://steven741.github.io/posts/2019-05-21-haskell-tutorial-2.html</link>
     <description><![CDATA[]]></description>
