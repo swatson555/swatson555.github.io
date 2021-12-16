@@ -8,8 +8,8 @@ feedConfig = FeedConfiguration
     { feedTitle       = "Steven's Blog"
     , feedDescription = "This the homepage and blog of Steven Watson."
     , feedAuthorName  = "Steven Watson"
-    , feedAuthorEmail = "16228203+steven741@users.noreply.github.com"
-    , feedRoot        = "https://steven741.github.io"
+    , feedAuthorEmail = "66756748+swatson555@users.noreply.github.com"
+    , feedRoot        = "https://swatson555.github.io"
     }
 
 
