@@ -18,16 +18,6 @@ config = defaultConfiguration
     }
 
 
-loadPostWriter = do
-    template <- readFile "./templates/toc.html"
-
-    return defaultHakyllWriterOptions
-        { writerTableOfContents = True
-        , writerTOCDepth        = 1
-        , writerTemplate        = Just template
-        }
-
-
 postCtx =
     dateField "date" "%B %d, %Y"     `mappend`
     dateField "datetime" "%Y-%m-%d"  `mappend`
@@ -35,8 +25,6 @@ postCtx =
 
 
 main = do
-    postWriter <- loadPostWriter
-
     hakyllWith config $ do
         match "templates/*" $ compile templateBodyCompiler
 
@@ -50,7 +38,7 @@ main = do
 
         match "posts/**" $ do
             route $ setExtension "html"
-            compile $ pandocCompilerWith defaultHakyllReaderOptions postWriter
+            compile $ pandocCompilerWith defaultHakyllReaderOptions defaultHakyllWriterOptions
                 >>= loadAndApplyTemplate "templates/article.html" postCtx
                 >>= loadAndApplyTemplate "templates/default.html" postCtx
                 >>= relativizeUrls
