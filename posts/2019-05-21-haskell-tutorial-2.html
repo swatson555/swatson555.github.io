@@ -15,7 +15,7 @@
 <nav class="header">
 <span><a href="../" target="_self"><h1>Steven Watson's<br>Personal Journal</h1></a></span>
 <ul>
-<li><a href="https://github.com/steven741/" target="_self"><span>repos</span></a></li>
+<li><a href="https://github.com/swatson555/" target="_self"><span>repos</span></a></li>
 </ul>
 </nav>
 <article>
@@ -27,14 +27,6 @@
 <p>Monads are often a point of frustration for learners of Haskell. The question of what a monad is leads to the question of why a monad is. The question of why a monad is leads to the question of what a monad is. It's been said that the IO monad is special. This is wrong. It's time that these myths be debunked. This article seeks to answer the question of what a monad is.</p>
 
 <hr>
-    <nav>
-        <h2>Table of Contents</h2>
-        <ul>
-        <li><a href="#what-a-monad-is">What A Monad Is</a></li>
-        <li><a href="#the-io-monad">The IO Monad</a></li>
-        <li><a href="#further-reading">Further Reading</a></li>
-        </ul>
-    </nav>
 </header>
 <h1 id="what-a-monad-is">What A Monad Is</h1>
 <p>A monad is an interface of 2 functions where 3 laws are satisfied. These 2 functions are:</p>
@@ -49,24 +41,24 @@
 <li>Associativity</li>
 </ul>
 <p>In Haskell, we might choose to represent the interface as the following.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">class</span> <span class="dt">Monad</span> m <span class="kw">where</span></span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="ot">  return ::</span>   a               <span class="ot">-&gt;</span> m a <span class="co">--This is unit</span></span>
-<span id="cb1-3"><a href="#cb1-3"></a><span class="ot">  (&gt;&gt;=)  ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b <span class="co">--This is bind</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="dt">Monad</span> m <span class="kw">where</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ot">  return ::</span>   a               <span class="ot">-&gt;</span> m a <span class="co">--This is unit</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ot">  (&gt;&gt;=)  ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b <span class="co">--This is bind</span></span></code></pre></div>
 <p>Here I’m referring to <code>unit</code> as <code>return</code> and to <code>bind</code> as <code>&gt;&gt;=</code>. These names are the typical way to refer to these concepts in Haskell programming.</p>
 <p>It’s important to understand that these types alone are not what make something a monad. A monad is more truly defined by it’s laws. What the laws mean in this context follows.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1"></a><span class="fu">return</span> a  <span class="op">&gt;&gt;=</span> f      <span class="op">==</span> f a                     <span class="co">--Left identity</span></span>
-<span id="cb2-2"><a href="#cb2-2"></a>m         <span class="op">&gt;&gt;=</span> <span class="fu">return</span> <span class="op">==</span> m                       <span class="co">--Right identity</span></span>
-<span id="cb2-3"><a href="#cb2-3"></a>(m <span class="op">&gt;&gt;=</span> f) <span class="op">&gt;&gt;=</span> g      <span class="op">==</span> m <span class="op">&gt;&gt;=</span> (\x <span class="ot">-&gt;</span> f x <span class="op">&gt;&gt;=</span> g) <span class="co">--Associativity</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">return</span> a  <span class="op">&gt;&gt;=</span> f      <span class="op">==</span> f a                     <span class="co">--Left identity</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>m         <span class="op">&gt;&gt;=</span> <span class="fu">return</span> <span class="op">==</span> m                       <span class="co">--Right identity</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>(m <span class="op">&gt;&gt;=</span> f) <span class="op">&gt;&gt;=</span> g      <span class="op">==</span> m <span class="op">&gt;&gt;=</span> (\x <span class="ot">-&gt;</span> f x <span class="op">&gt;&gt;=</span> g) <span class="co">--Associativity</span></span></code></pre></div>
 <p>Actually, it’s hard to see that these laws are even being satisfied so, let’s look at this in a slightly different way.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1"></a><span class="ot">(&gt;=&gt;) ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> (b <span class="ot">-&gt;</span> m c) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> m c</span>
-<span id="cb3-2"><a href="#cb3-2"></a>(m <span class="op">&gt;=&gt;</span> n) x <span class="ot">=</span></span>
-<span id="cb3-3"><a href="#cb3-3"></a>  m x <span class="op">&gt;&gt;=</span> n</span>
-<span id="cb3-4"><a href="#cb3-4"></a></span>
-<span id="cb3-5"><a href="#cb3-5"></a><span class="co">-- therefore, if this is a monad the following will be true.</span></span>
-<span id="cb3-6"><a href="#cb3-6"></a></span>
-<span id="cb3-7"><a href="#cb3-7"></a><span class="fu">return</span>    <span class="op">&gt;=&gt;</span> g      <span class="op">==</span> g               <span class="co">--Left identity</span></span>
-<span id="cb3-8"><a href="#cb3-8"></a>f         <span class="op">&gt;=&gt;</span> <span class="fu">return</span> <span class="op">==</span> f               <span class="co">--Right identity</span></span>
-<span id="cb3-9"><a href="#cb3-9"></a>(f <span class="op">&gt;=&gt;</span> g) <span class="op">&gt;=&gt;</span> h      <span class="op">==</span> f <span class="op">&gt;=&gt;</span> (g <span class="op">&gt;=&gt;</span> h) <span class="co">--Associativity</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ot">(&gt;=&gt;) ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> (b <span class="ot">-&gt;</span> m c) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> m c</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>(m <span class="op">&gt;=&gt;</span> n) x <span class="ot">=</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  m x <span class="op">&gt;&gt;=</span> n</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">-- therefore, if this is a monad the following will be true.</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">return</span>    <span class="op">&gt;=&gt;</span> g      <span class="op">==</span> g               <span class="co">--Left identity</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>f         <span class="op">&gt;=&gt;</span> <span class="fu">return</span> <span class="op">==</span> f               <span class="co">--Right identity</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>(f <span class="op">&gt;=&gt;</span> g) <span class="op">&gt;=&gt;</span> h      <span class="op">==</span> f <span class="op">&gt;=&gt;</span> (g <span class="op">&gt;=&gt;</span> h) <span class="co">--Associativity</span></span></code></pre></div>
 <p>Ah, now we can see these properties far more clearly. The <code>&gt;=&gt;</code> is called a Kleisli composition operator.</p>
 <p>If you’ve made it to this point you may be thinking “Why? What’s the point of this?” The answer to that question is explored in <a href="https://steven741.github.io/posts/2018-07-28-haskell-tutorial-1.html">Why We Need Monads</a> but, to make this article complete I’ll say it here. It turns out monads are useful for managing side-effects in programs that are evaluated using normal order.</p>
 <p>Well. This is exceptionally complicated. This is truly confusing. How can one make sense of this? Unfortunately, the only way is practice. You won’t fully understand monads by reading this article. <a href="https://www.quora.com/Euclid-wrote-There-is-no-royal-road-to-geometry-What-does-this-mean-to-you">There’s no royal path to geometry</a> and, there’s no royal path to monads.</p>
@@ -74,74 +66,74 @@
 <p>What monads are like is a more structured form of currying. It’s a form of composition. A monad, by itself, preforms an action. These actions can be bound together with the bind operation. In similar kind to how 2 functions can be composed together. What makes it possible to bind these operations are the monadic laws.</p>
 <h1 id="the-io-monad">The IO Monad</h1>
 <p>It would be useful to see the underpenning of a monad. It’s been said that the IO monad is special. It’s been said that it’s a monad that’s internal to the compiler and, can’t be implemented by a typical program. Not only is this untrue but, the IO monad is in fact the simplest monad which exists. To that end, let’s implement the IO monad.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw">data</span> <span class="dt">IO</span> a <span class="ot">=</span> <span class="dt">IO</span> a <span class="kw">deriving</span> <span class="dt">Show</span></span>
-<span id="cb4-2"><a href="#cb4-2"></a></span>
-<span id="cb4-3"><a href="#cb4-3"></a><span class="kw">class</span> <span class="dt">Monad</span> m <span class="kw">where</span></span>
-<span id="cb4-4"><a href="#cb4-4"></a><span class="ot">  unit ::</span>   a               <span class="ot">-&gt;</span> m a</span>
-<span id="cb4-5"><a href="#cb4-5"></a><span class="ot">  bind ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b</span>
-<span id="cb4-6"><a href="#cb4-6"></a></span>
-<span id="cb4-7"><a href="#cb4-7"></a><span class="kw">instance</span> <span class="dt">Monad</span> <span class="dt">IO</span> <span class="kw">where</span></span>
-<span id="cb4-8"><a href="#cb4-8"></a>  unit a        <span class="ot">=</span> <span class="dt">IO</span> a</span>
-<span id="cb4-9"><a href="#cb4-9"></a>  bind (<span class="dt">IO</span> a) f <span class="ot">=</span> f a</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">IO</span> a <span class="ot">=</span> <span class="dt">IO</span> a <span class="kw">deriving</span> <span class="dt">Show</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="dt">Monad</span> m <span class="kw">where</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="ot">  unit ::</span>   a               <span class="ot">-&gt;</span> m a</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="ot">  bind ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Monad</span> <span class="dt">IO</span> <span class="kw">where</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  unit a        <span class="ot">=</span> <span class="dt">IO</span> a</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  bind (<span class="dt">IO</span> a) f <span class="ot">=</span> f a</span></code></pre></div>
 <p>That’s it. That’s all the IO monad is. It’s literally just it’s construction and no more. With this we can use functions with side effects. Let’s take a look at that.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1"></a>foreign <span class="kw">import</span> ccall unsafe &quot;getchar&quot; get' :: <span class="dt">Int</span></span>
-<span id="cb5-2"><a href="#cb5-2"></a>foreign <span class="kw">import</span> ccall unsafe &quot;putchar&quot; put' :: <span class="dt">Int</span> -&gt; <span class="dt">Int</span></span>
-<span id="cb5-3"><a href="#cb5-3"></a></span>
-<span id="cb5-4"><a href="#cb5-4"></a><span class="ot">get ::</span> <span class="dt">IO</span> <span class="dt">Int</span></span>
-<span id="cb5-5"><a href="#cb5-5"></a>get <span class="ot">=</span> unit get'</span>
-<span id="cb5-6"><a href="#cb5-6"></a></span>
-<span id="cb5-7"><a href="#cb5-7"></a><span class="ot">put ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> <span class="dt">Int</span></span>
-<span id="cb5-8"><a href="#cb5-8"></a>put c <span class="ot">=</span> unit (put' c)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>foreign <span class="kw">import</span> ccall unsafe &quot;getchar&quot; get' :: <span class="dt">Int</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>foreign <span class="kw">import</span> ccall unsafe &quot;putchar&quot; put' :: <span class="dt">Int</span> -&gt; <span class="dt">Int</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="ot">get ::</span> <span class="dt">IO</span> <span class="dt">Int</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>get <span class="ot">=</span> unit get'</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="ot">put ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> <span class="dt">Int</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>put c <span class="ot">=</span> unit (put' c)</span></code></pre></div>
 <p>Here we’re calling out to some C code and, wrapping the results of the call in our monad. That’s all we have to do. Let’s use this. Let’s get a character from stdin and write it back to stdout.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">do</span></span>
-<span id="cb6-2"><a href="#cb6-2"></a>  c <span class="ot">&lt;-</span> get</span>
-<span id="cb6-3"><a href="#cb6-3"></a>  put c</span>
-<span id="cb6-4"><a href="#cb6-4"></a></span>
-<span id="cb6-5"><a href="#cb6-5"></a><span class="co">-- or</span></span>
-<span id="cb6-6"><a href="#cb6-6"></a></span>
-<span id="cb6-7"><a href="#cb6-7"></a>bind get (\c <span class="ot">-&gt;</span> put c)</span>
-<span id="cb6-8"><a href="#cb6-8"></a></span>
-<span id="cb6-9"><a href="#cb6-9"></a><span class="co">-- or</span></span>
-<span id="cb6-10"><a href="#cb6-10"></a></span>
-<span id="cb6-11"><a href="#cb6-11"></a>bind get put</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">do</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  c <span class="ot">&lt;-</span> get</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  put c</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">-- or</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>bind get (\c <span class="ot">-&gt;</span> put c)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">-- or</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>bind get put</span></code></pre></div>
 <p>Here I have 3 ways of doing the same thing. The top-most example is the most sugared. The bottom-most example has no sugar. The unsugared example is the most useful to us since this is what will actually be evaluated. We evaluate from left to right. So, evaluate <code>get</code>. Then evaluate <code>put</code> with the value of <code>get</code>. That’s not so bad. Let’s look at a more complicated example.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">do</span></span>
-<span id="cb7-2"><a href="#cb7-2"></a>  a <span class="ot">&lt;-</span> unit <span class="dv">97</span></span>
-<span id="cb7-3"><a href="#cb7-3"></a>  c <span class="ot">&lt;-</span> get</span>
-<span id="cb7-4"><a href="#cb7-4"></a>  put a</span>
-<span id="cb7-5"><a href="#cb7-5"></a>  put c</span>
-<span id="cb7-6"><a href="#cb7-6"></a></span>
-<span id="cb7-7"><a href="#cb7-7"></a><span class="co">-- or</span></span>
-<span id="cb7-8"><a href="#cb7-8"></a></span>
-<span id="cb7-9"><a href="#cb7-9"></a>bind (unit <span class="dv">97</span>)</span>
-<span id="cb7-10"><a href="#cb7-10"></a>     (\a <span class="ot">-&gt;</span> bind get</span>
-<span id="cb7-11"><a href="#cb7-11"></a>                 (\c <span class="ot">-&gt;</span> bind (put a)</span>
-<span id="cb7-12"><a href="#cb7-12"></a>		             (\_ <span class="ot">-&gt;</span> put c)))</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">do</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">&lt;-</span> unit <span class="dv">97</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  c <span class="ot">&lt;-</span> get</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  put a</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  put c</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co">-- or</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>bind (unit <span class="dv">97</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>     (\a <span class="ot">-&gt;</span> bind get</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>                 (\c <span class="ot">-&gt;</span> bind (put a)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>		             (\_ <span class="ot">-&gt;</span> put c)))</span></code></pre></div>
 <p>Now this is interesting. The top example looks just like an imperatively defined program but, our desugared version is clearly just one expression. Evaluating this expression will be hard so let’s walk through it in pieces.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1"></a>bind (unit <span class="dv">97</span>)</span>
-<span id="cb8-2"><a href="#cb8-2"></a>     (\a <span class="ot">-&gt;</span> bind get</span>
-<span id="cb8-3"><a href="#cb8-3"></a>                 (\c <span class="ot">-&gt;</span> bind (put a)</span>
-<span id="cb8-4"><a href="#cb8-4"></a>		             (\_ <span class="ot">-&gt;</span> put c)))</span>
-<span id="cb8-5"><a href="#cb8-5"></a></span>
-<span id="cb8-6"><a href="#cb8-6"></a><span class="co">-- \a is now 97</span></span>
-<span id="cb8-7"><a href="#cb8-7"></a></span>
-<span id="cb8-8"><a href="#cb8-8"></a></span>
-<span id="cb8-9"><a href="#cb8-9"></a>bind get</span>
-<span id="cb8-10"><a href="#cb8-10"></a>     (\c <span class="ot">-&gt;</span> bind (put a)</span>
-<span id="cb8-11"><a href="#cb8-11"></a>                 (\_ <span class="ot">-&gt;</span> put c))</span>
-<span id="cb8-12"><a href="#cb8-12"></a></span>
-<span id="cb8-13"><a href="#cb8-13"></a><span class="co">-- \c is now the result of `get`</span></span>
-<span id="cb8-14"><a href="#cb8-14"></a></span>
-<span id="cb8-15"><a href="#cb8-15"></a></span>
-<span id="cb8-16"><a href="#cb8-16"></a>bind (put a)</span>
-<span id="cb8-17"><a href="#cb8-17"></a>     (\_ <span class="ot">-&gt;</span> put c)</span>
-<span id="cb8-18"><a href="#cb8-18"></a></span>
-<span id="cb8-19"><a href="#cb8-19"></a><span class="co">-- \_ is now the result of `put a`</span></span>
-<span id="cb8-20"><a href="#cb8-20"></a></span>
-<span id="cb8-21"><a href="#cb8-21"></a></span>
-<span id="cb8-22"><a href="#cb8-22"></a>\_ <span class="ot">-&gt;</span> put c</span>
-<span id="cb8-23"><a href="#cb8-23"></a></span>
-<span id="cb8-24"><a href="#cb8-24"></a><span class="co">-- The expression is the result of `put c`</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>bind (unit <span class="dv">97</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>     (\a <span class="ot">-&gt;</span> bind get</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                 (\c <span class="ot">-&gt;</span> bind (put a)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>		             (\_ <span class="ot">-&gt;</span> put c)))</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">-- \a is now 97</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>bind get</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>     (\c <span class="ot">-&gt;</span> bind (put a)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>                 (\_ <span class="ot">-&gt;</span> put c))</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="co">-- \c is now the result of `get`</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>bind (put a)</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>     (\_ <span class="ot">-&gt;</span> put c)</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="co">-- \_ is now the result of `put a`</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>\_ <span class="ot">-&gt;</span> put c</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a><span class="co">-- The expression is the result of `put c`</span></span></code></pre></div>
 <p>That’s it. That’s really what the IO monad is. Now, it’s significant to note that Haskell’s evaluation is memoized. That has consequences for functions with side-effects. But, this isn’t much of a problem. You could imagine a version of <code>foreign import ccall</code> that doesn’t memoize it’s results. Indeed, Haskell’s IO monad doesn’t memoize it’s results.</p>
 <p>So, what’s a monad? It’s complicated. It’s defined by abstract properties but, it can be useful for achiving certain results as was shown here.</p>
 <h1 id="further-reading">Further Reading</h1>
@@ -160,7 +152,7 @@
 *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
 *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
 var disqus_config = function () {
-this.page.url = "https://steven741.github.io/posts/2019-05-21-haskell-tutorial-2.html";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.url = "https://swatson555.github.io/posts/2019-05-21-haskell-tutorial-2.html";  // Replace PAGE_URL with your page's canonical URL variable
 this.page.identifier = "What Is A Monad?"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 };
 var disqus_url = "https://steven741.github.io";

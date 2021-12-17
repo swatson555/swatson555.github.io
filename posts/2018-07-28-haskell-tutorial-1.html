@@ -15,7 +15,7 @@
 <nav class="header">
 <span><a href="../" target="_self"><h1>Steven Watson's<br>Personal Journal</h1></a></span>
 <ul>
-<li><a href="https://github.com/steven741/" target="_self"><span>repos</span></a></li>
+<li><a href="https://github.com/swatson555/" target="_self"><span>repos</span></a></li>
 </ul>
 </nav>
 <article>
@@ -27,60 +27,52 @@
 <p>Monads are often a point of frustration for learners of Haskell. The question of what a monad is leads to the question of why a monad is. The question of why a monad is leads to the question of what a monad is. It's been said that monads aren't necessary. This is wrong. It's time that these myths be debunked. This article seeks to answer the question of why a monad is.</p>
 
 <hr>
-    <nav>
-        <h2>Table of Contents</h2>
-        <ul>
-        <li><a href="#the-basics-of-haskell">The Basics of Haskell</a></li>
-        <li><a href="#the-problem-of-haskell">The Problem of Haskell</a></li>
-        <li><a href="#further-reading">Further Reading</a></li>
-        </ul>
-    </nav>
 </header>
 <h1 id="the-basics-of-haskell">The Basics of Haskell</h1>
 <p>Haskell allows one to write very elegant programs. Let’s begin by looking at a program that calculates the factorial of it’s input.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1"></a>fac n <span class="ot">=</span></span>
-<span id="cb1-2"><a href="#cb1-2"></a> <span class="kw">if</span> n <span class="op">==</span> <span class="dv">0</span> <span class="kw">then</span> <span class="dv">1</span> <span class="kw">else</span> n <span class="op">*</span> fac (n<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>fac n <span class="ot">=</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a> <span class="kw">if</span> n <span class="op">==</span> <span class="dv">0</span> <span class="kw">then</span> <span class="dv">1</span> <span class="kw">else</span> n <span class="op">*</span> fac (n<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div>
 <p>Here we have a function of 1 argument. The function’s definition is a single <code>if then else</code> statement. I don’t want to dwell on this example for too long. It should be clear what’s going on in this example by inspection. The important thing to note is how functions and if-statements are defined.</p>
 <p>Let’s look at a slightly more involved example that calculates the hypotenuse of it’s 2 inputs. In this function we’ll see an example of multi-line comments, a function of more than 1 argument and, the let-in clause.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1"></a><span class="co">{-</span></span>
-<span id="cb2-2"><a href="#cb2-2"></a><span class="co">Calculate the hypotenuse of a and b.</span></span>
-<span id="cb2-3"><a href="#cb2-3"></a><span class="co">-}</span></span>
-<span id="cb2-4"><a href="#cb2-4"></a></span>
-<span id="cb2-5"><a href="#cb2-5"></a>hyp a b <span class="ot">=</span></span>
-<span id="cb2-6"><a href="#cb2-6"></a> <span class="kw">let</span></span>
-<span id="cb2-7"><a href="#cb2-7"></a>   a' <span class="ot">=</span> a <span class="op">**</span> <span class="dv">2</span></span>
-<span id="cb2-8"><a href="#cb2-8"></a>   b' <span class="ot">=</span> b <span class="op">**</span> <span class="dv">2</span></span>
-<span id="cb2-9"><a href="#cb2-9"></a> <span class="kw">in</span></span>
-<span id="cb2-10"><a href="#cb2-10"></a>   <span class="fu">sqrt</span> (a' <span class="op">+</span> b')</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">{-</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">Calculate the hypotenuse of a and b.</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">-}</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>hyp a b <span class="ot">=</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a> <span class="kw">let</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>   a' <span class="ot">=</span> a <span class="op">**</span> <span class="dv">2</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>   b' <span class="ot">=</span> b <span class="op">**</span> <span class="dv">2</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a> <span class="kw">in</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>   <span class="fu">sqrt</span> (a' <span class="op">+</span> b')</span></code></pre></div>
 <p>Notice at the very top of this program that we have <code>{- -}</code>. These are how one would write multi-line comments. Later we’ll see an example of single-line comments.</p>
 <p>The last function had a single argument. This function has 2 arguments. Note the syntax for that. The syntax takes the form <code>f arg1 arg2 arg3 ...</code> where the trailing ellipsis could be additional arguments.</p>
 <p>The body of this function is also quite different from our first example. Here we’re using a let-in clause. We’re saying let <code>a'</code> be a<sup>2</sup> and, let <code>b'</code> be b<sup>2</sup>. Once we’ve defined <code>a'</code> and <code>b'</code> we can use them in an expression. Here the expression is <code>sqrt (a' + b')</code>.</p>
 <p>These small examples should feel straight forward. The next example will be far more involved. We’ll be using a bisection search to find the square root of some number x. This example will use a function defined locally within another function, single-line comments show up, the let-in and if-statements make a return and, a new concept called a where clause will be introduced.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1"></a><span class="co">{-</span></span>
-<span id="cb3-2"><a href="#cb3-2"></a><span class="co">Find the sqrt of x.</span></span>
-<span id="cb3-3"><a href="#cb3-3"></a><span class="co">-}</span></span>
-<span id="cb3-4"><a href="#cb3-4"></a></span>
-<span id="cb3-5"><a href="#cb3-5"></a>sqrt' x <span class="ot">=</span></span>
-<span id="cb3-6"><a href="#cb3-6"></a> <span class="co">-- The sqrt of x must be between 0 and x</span></span>
-<span id="cb3-7"><a href="#cb3-7"></a> <span class="co">-- so, that will be our initial guess.</span></span>
-<span id="cb3-8"><a href="#cb3-8"></a> guess <span class="dv">0</span> x</span>
-<span id="cb3-9"><a href="#cb3-9"></a> <span class="kw">where</span></span>
-<span id="cb3-10"><a href="#cb3-10"></a>   <span class="co">-- This is the tolerance.</span></span>
-<span id="cb3-11"><a href="#cb3-11"></a>   <span class="co">-- The program will find the sqrt +/- epsilon.</span></span>
-<span id="cb3-12"><a href="#cb3-12"></a>   epsilon <span class="ot">=</span> <span class="fl">0.001</span></span>
-<span id="cb3-13"><a href="#cb3-13"></a></span>
-<span id="cb3-14"><a href="#cb3-14"></a>   guess low high <span class="ot">=</span></span>
-<span id="cb3-15"><a href="#cb3-15"></a>     <span class="kw">let</span></span>
-<span id="cb3-16"><a href="#cb3-16"></a>       rt <span class="ot">=</span> (high <span class="op">+</span> low) <span class="op">/</span> <span class="dv">2</span> <span class="co">-- Take the midpoint as the potential square root.</span></span>
-<span id="cb3-17"><a href="#cb3-17"></a>       x' <span class="ot">=</span> rt <span class="op">**</span> <span class="dv">2</span>          <span class="co">-- Squaring the guess should be the original value x.</span></span>
-<span id="cb3-18"><a href="#cb3-18"></a>     <span class="kw">in</span></span>
-<span id="cb3-19"><a href="#cb3-19"></a>       <span class="kw">if</span> <span class="fu">abs</span> (x' <span class="op">-</span> x) <span class="op">&gt;=</span> epsilon</span>
-<span id="cb3-20"><a href="#cb3-20"></a>       <span class="kw">then</span></span>
-<span id="cb3-21"><a href="#cb3-21"></a>         <span class="kw">if</span> x' <span class="op">&lt;</span> x</span>
-<span id="cb3-22"><a href="#cb3-22"></a>         <span class="kw">then</span> guess rt high</span>
-<span id="cb3-23"><a href="#cb3-23"></a>         <span class="kw">else</span> guess low rt</span>
-<span id="cb3-24"><a href="#cb3-24"></a>       <span class="kw">else</span></span>
-<span id="cb3-25"><a href="#cb3-25"></a>         rt</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">{-</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">Find the sqrt of x.</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">-}</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>sqrt' x <span class="ot">=</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a> <span class="co">-- The sqrt of x must be between 0 and x</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a> <span class="co">-- so, that will be our initial guess.</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a> guess <span class="dv">0</span> x</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a> <span class="kw">where</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>   <span class="co">-- This is the tolerance.</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>   <span class="co">-- The program will find the sqrt +/- epsilon.</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>   epsilon <span class="ot">=</span> <span class="fl">0.001</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>   guess low high <span class="ot">=</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>     <span class="kw">let</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>       rt <span class="ot">=</span> (high <span class="op">+</span> low) <span class="op">/</span> <span class="dv">2</span> <span class="co">-- Take the midpoint as the potential square root.</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>       x' <span class="ot">=</span> rt <span class="op">**</span> <span class="dv">2</span>          <span class="co">-- Squaring the guess should be the original value x.</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>     <span class="kw">in</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>       <span class="kw">if</span> <span class="fu">abs</span> (x' <span class="op">-</span> x) <span class="op">&gt;=</span> epsilon</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>       <span class="kw">then</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>         <span class="kw">if</span> x' <span class="op">&lt;</span> x</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>         <span class="kw">then</span> guess rt high</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>         <span class="kw">else</span> guess low rt</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>       <span class="kw">else</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>         rt</span></code></pre></div>
 <p>First take a look at these comments. At the top we have a multi-line comment just as before but, now we have single-line comments denoted by <code>--</code>. Hopefully, the syntax highlighting makes these comments clear to distinguish.</p>
 <p>Look at the body of the <code>sqrt'</code> function. It’s just a single statement. Our function’s body is just a single function call in the form <code>guess 0 x</code>. <code>guess</code> is a function defined within a where clause. In fact, we define 2 things in the where clause. We defined <code>guess</code> and, a variable called <code>epsilon</code>. You may be thinking that a where clause and a let-in clause are very similar. Indeed, they can be thought of as doing the same thing in a different way.</p>
 <p>I’ll leave the analysis of the <code>guess</code> function as an exercise to the reader. Syntactically speaking <code>guess</code> contains no new language constructs however, that doesn’t mean understanding the program is trivial. Much has been written about this method. In fact, the bisection search of square roots have been known since Babylonian times!</p>
@@ -88,80 +80,80 @@
 <h1 id="the-problem-of-haskell">The Problem of Haskell</h1>
 <p>In general there are 2 ways of evaluating programs. The most common evaluation strategy is called <a href="https://en.wikipedia.org/wiki/Evaluation_strategy#Applicative_order">applicative order evaluation</a>. The other evaluation strategy is called <a href="https://en.wikipedia.org/wiki/Evaluation_strategy#Normal_order">normal order evaluation</a>. Haskell uses normal order evaluation.</p>
 <p>Unfortunately normal order evaluation has a very nasty problem. That problem is side effects. A pure function is strictly a mapping from it’s domain to it’s range. If we want to write to stdout we don’t really care about it’s mapping. We want a function that has the side effect of writing to stdout. That causes a problem for a programming language like Haskell. Let’s look at a small example using applicative order evaluation first to get a better idea of everything.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1"></a>numWithPrint num <span class="ot">=</span></span>
-<span id="cb4-2"><a href="#cb4-2"></a> <span class="fu">print</span> num</span>
-<span id="cb4-3"><a href="#cb4-3"></a> num</span>
-<span id="cb4-4"><a href="#cb4-4"></a></span>
-<span id="cb4-5"><a href="#cb4-5"></a>doubleNum num <span class="ot">=</span></span>
-<span id="cb4-6"><a href="#cb4-6"></a> num <span class="op">+</span> num</span>
-<span id="cb4-7"><a href="#cb4-7"></a></span>
-<span id="cb4-8"><a href="#cb4-8"></a>doubleNum (numWithPrint <span class="dv">6</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>numWithPrint num <span class="ot">=</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a> <span class="fu">print</span> num</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a> num</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>doubleNum num <span class="ot">=</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a> num <span class="op">+</span> num</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>doubleNum (numWithPrint <span class="dv">6</span>)</span></code></pre></div>
 <p>This is our setup. <code>numWithPrint</code> takes in a number, prints it to stdout, and returns the same number. So, <code>numWithPrint 6 = 6</code>, <code>numWithPrint 1 = 1</code>, etc. <code>doubleNum</code> just doubles it’s input. E.g. <code>doubleNum 4 = 8</code>. This is not valid Haskell code. We’ll find out why that is soon enough but, for now let’s use applicative order evaluation to evaluate <code>doubleNum (numWithPrint 6)</code>.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1"></a><span class="op">1&gt;</span> <span class="ex">doubleNum</span> (numWithPrint 6)</span>
-<span id="cb5-2"><a href="#cb5-2"></a></span>
-<span id="cb5-3"><a href="#cb5-3"></a><span class="co"># We evaluate the arguments of `doubleNum` first</span></span>
-<span id="cb5-4"><a href="#cb5-4"></a></span>
-<span id="cb5-5"><a href="#cb5-5"></a><span class="op">2&gt;</span> <span class="ex">doubleNum</span> (print 6<span class="kw">;</span> <span class="ex">6</span>)</span>
-<span id="cb5-6"><a href="#cb5-6"></a></span>
-<span id="cb5-7"><a href="#cb5-7"></a><span class="co"># We can't reduce `doubleNum`'s arguments anymore</span></span>
-<span id="cb5-8"><a href="#cb5-8"></a></span>
-<span id="cb5-9"><a href="#cb5-9"></a><span class="op">3&gt;</span> <span class="ex">doubleNum</span> 6</span>
-<span id="cb5-10"><a href="#cb5-10"></a><span class="op">4&gt;</span> <span class="ex">6</span> + 6</span>
-<span id="cb5-11"><a href="#cb5-11"></a><span class="op">5&gt;</span> <span class="ex">12</span></span>
-<span id="cb5-12"><a href="#cb5-12"></a></span>
-<span id="cb5-13"><a href="#cb5-13"></a><span class="ex">---</span></span>
-<span id="cb5-14"><a href="#cb5-14"></a><span class="ex">stdout</span>:</span>
-<span id="cb5-15"><a href="#cb5-15"></a><span class="ex">6</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span><span class="op">&gt;</span> doubleNum <span class="kw">(</span><span class="ex">numWithPrint</span> 6<span class="kw">)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># We evaluate the arguments of `doubleNum` first</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span><span class="op">&gt;</span> doubleNum <span class="kw">(</span><span class="ex">print</span> 6<span class="kw">;</span> <span class="ex">6</span><span class="kw">)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># We can't reduce `doubleNum`'s arguments anymore</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="dv">3</span><span class="op">&gt;</span> doubleNum <span class="ex">6</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="dv">4</span><span class="op">&gt;</span> 6 <span class="ex">+</span> 6</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="dv">5</span><span class="op">&gt;</span> 12</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="ex">---</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="ex">stdout:</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="ex">6</span></span></code></pre></div>
 <p>Do you see what’s happening here? We evaluate the function’s arguments first and, substitute the result into the function’s body. <code>doubleNum (numWithPrint 6)</code> got reduced to <code>doubleNum 6</code> but, we have a side effect. The side effect was printing to stdout. Let’s look at what happens if we used normal order evaluation.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1"></a><span class="op">1&gt;</span> <span class="ex">doubleNum</span> (numWithPrint 6)</span>
-<span id="cb6-2"><a href="#cb6-2"></a></span>
-<span id="cb6-3"><a href="#cb6-3"></a><span class="co"># We substitute the arguments of `doubleNum` first</span></span>
-<span id="cb6-4"><a href="#cb6-4"></a></span>
-<span id="cb6-5"><a href="#cb6-5"></a><span class="op">2&gt;</span> <span class="kw">(</span><span class="ex">numWithPrint</span> 6<span class="kw">)</span> <span class="ex">+</span> (numWithPrint 6)</span>
-<span id="cb6-6"><a href="#cb6-6"></a></span>
-<span id="cb6-7"><a href="#cb6-7"></a><span class="co"># We can't substitute anymore</span></span>
-<span id="cb6-8"><a href="#cb6-8"></a></span>
-<span id="cb6-9"><a href="#cb6-9"></a><span class="op">3&gt;</span> <span class="kw">(</span><span class="ex">print</span> 6<span class="kw">;</span> <span class="ex">6</span><span class="kw">)</span> <span class="ex">+</span> (print 6<span class="kw">;</span> <span class="ex">6</span>)</span>
-<span id="cb6-10"><a href="#cb6-10"></a><span class="op">4&gt;</span> <span class="ex">6</span> + 6</span>
-<span id="cb6-11"><a href="#cb6-11"></a><span class="op">5&gt;</span> <span class="ex">12</span></span>
-<span id="cb6-12"><a href="#cb6-12"></a></span>
-<span id="cb6-13"><a href="#cb6-13"></a><span class="ex">---</span></span>
-<span id="cb6-14"><a href="#cb6-14"></a><span class="ex">stdout</span>:</span>
-<span id="cb6-15"><a href="#cb6-15"></a><span class="ex">6</span></span>
-<span id="cb6-16"><a href="#cb6-16"></a><span class="ex">6</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span><span class="op">&gt;</span> doubleNum <span class="kw">(</span><span class="ex">numWithPrint</span> 6<span class="kw">)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># We substitute the arguments of `doubleNum` first</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span><span class="op">&gt;</span> <span class="kw">(</span><span class="ex">numWithPrint</span> 6<span class="kw">)</span> <span class="ex">+</span> <span class="er">(</span><span class="ex">numWithPrint</span> 6<span class="kw">)</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># We can't substitute anymore</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="dv">3</span><span class="op">&gt;</span> <span class="kw">(</span><span class="ex">print</span> 6<span class="kw">;</span> <span class="ex">6</span><span class="kw">)</span> <span class="ex">+</span> <span class="er">(</span><span class="ex">print</span> 6<span class="kw">;</span> <span class="ex">6</span><span class="kw">)</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="dv">4</span><span class="op">&gt;</span> 6 <span class="ex">+</span> 6</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="dv">5</span><span class="op">&gt;</span> 12</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="ex">---</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="ex">stdout:</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="ex">6</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="ex">6</span></span></code></pre></div>
 <p>Oh my! This isn’t good. We’ve printed ‘6’ twice! Unlike applicative order we don’t evaluate the function’s arguments first. Instead we substitute the arguments into the function’s body. This is the problem of Haskell.</p>
 <p>Haskell’s solution to this problem is to use monads. Actually I want to make this very clear. <strong>Monads solve the problem of normal order evaluation.</strong> If you’re reading this paper surely at some point you’ll read that monads allow for pure functional programming. <strong>Not all functions in Haskell are pure functions.</strong> You may read that monads represent a type that passes along a world concept or, that they’re a type that represents the abstract idea of a computation. This is true at a conceptual level. You may read that monads aren’t necessary. <strong>For handling side effects in Haskell they are necessary.</strong> Let’s look at why they’re necessary with a small example of how to use them.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1"></a>numWithPrint num <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb7-2"><a href="#cb7-2"></a> <span class="fu">print</span> num</span>
-<span id="cb7-3"><a href="#cb7-3"></a> <span class="fu">return</span> num</span>
-<span id="cb7-4"><a href="#cb7-4"></a></span>
-<span id="cb7-5"><a href="#cb7-5"></a>doubleNum ioNum <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb7-6"><a href="#cb7-6"></a> num <span class="ot">&lt;-</span> ioNum</span>
-<span id="cb7-7"><a href="#cb7-7"></a> <span class="fu">return</span> (num <span class="op">+</span> num)</span>
-<span id="cb7-8"><a href="#cb7-8"></a></span>
-<span id="cb7-9"><a href="#cb7-9"></a>doubleNum (numWithPrint <span class="dv">6</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>numWithPrint num <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a> <span class="fu">print</span> num</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a> <span class="fu">return</span> num</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>doubleNum ioNum <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a> num <span class="ot">&lt;-</span> ioNum</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a> <span class="fu">return</span> (num <span class="op">+</span> num)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>doubleNum (numWithPrint <span class="dv">6</span>)</span></code></pre></div>
 <p>The first thing that one needs to understand is the do-return macro. Look at <code>numWithPrint</code> after the <code>=</code> there’s a <code>do</code>. This begins the do-return macro. The last line of this function is a <code>return</code>. What are we returning? A monad! No longer is <code>numWithPrint 6 = 6</code> a true statement. Rather <code>numWithPrint 6 = IO 6</code> is what we have here.</p>
 <p>This is quite good because <code>doubleNum</code> only accepts a number wrapped in a monad. Unfortunately, we can’t just add 2 monads. It doesn’t work that way. We need to unwrap our monad and add them. That’s what <code>num &lt;- ioNum</code> does. It takes the monad <code>ioNum</code> and, binds it’s value to <code>num</code>. Now <code>num</code> is just a regular number. We can double it and, return it back out as a monad.</p>
 <p>This is valid haskell code. It isn’t as nice looking as before but, it’ll get the job done. Let’s look at this using normal order evaluation. There is one caveat about this analysis. You may have noticed I called do-return a macro. It’s useful to see what do-return expands to however, I won’t be expanding the do-return macro here.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1"></a><span class="op">1&gt;</span> <span class="ex">doubleNum</span> (numWithPrint 6)</span>
-<span id="cb8-2"><a href="#cb8-2"></a><span class="op">2&gt;</span> <span class="ex">doubleNum</span> (print 6<span class="kw">;</span> <span class="bu">return</span> 6)</span>
-<span id="cb8-3"><a href="#cb8-3"></a></span>
-<span id="cb8-4"><a href="#cb8-4"></a><span class="co"># Binding acts like a wall. We can't substitute</span></span>
-<span id="cb8-5"><a href="#cb8-5"></a><span class="co"># anything at this point without evaluating `num`</span></span>
-<span id="cb8-6"><a href="#cb8-6"></a></span>
-<span id="cb8-7"><a href="#cb8-7"></a><span class="op">3&gt;</span> <span class="ex">num</span> <span class="op">&lt;</span>- (print 6<span class="kw">;</span> <span class="bu">return</span> 6);</span>
-<span id="cb8-8"><a href="#cb8-8"></a>   <span class="bu">return</span> (num + num);</span>
-<span id="cb8-9"><a href="#cb8-9"></a></span>
-<span id="cb8-10"><a href="#cb8-10"></a><span class="co"># 6 will be bound to `num`</span></span>
-<span id="cb8-11"><a href="#cb8-11"></a></span>
-<span id="cb8-12"><a href="#cb8-12"></a><span class="op">4&gt;</span> <span class="ex">num</span> <span class="op">&lt;</span>- IO 6</span>
-<span id="cb8-13"><a href="#cb8-13"></a>   <span class="bu">return</span> (num + num);</span>
-<span id="cb8-14"><a href="#cb8-14"></a><span class="op">5&gt;</span> <span class="bu">return</span> (6 + 6)</span>
-<span id="cb8-15"><a href="#cb8-15"></a><span class="op">6&gt;</span> <span class="ex">IO</span> 12</span>
-<span id="cb8-16"><a href="#cb8-16"></a></span>
-<span id="cb8-17"><a href="#cb8-17"></a><span class="ex">---</span></span>
-<span id="cb8-18"><a href="#cb8-18"></a><span class="ex">stdout</span>:</span>
-<span id="cb8-19"><a href="#cb8-19"></a><span class="ex">6</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span><span class="op">&gt;</span> doubleNum <span class="kw">(</span><span class="ex">numWithPrint</span> 6<span class="kw">)</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span><span class="op">&gt;</span> doubleNum <span class="kw">(</span><span class="ex">print</span> 6<span class="kw">;</span> <span class="cf">return</span> <span class="dv">6</span><span class="kw">)</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Binding acts like a wall. We can't substitute</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># anything at this point without evaluating `num`</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="dv">3</span><span class="op">&gt;</span> num <span class="op">&lt;</span>- <span class="kw">(</span><span class="ex">print</span> 6<span class="kw">;</span> <span class="cf">return</span> <span class="dv">6</span><span class="kw">);</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>   <span class="cf">return</span> <span class="kw">(</span><span class="ex">num</span> + num<span class="kw">);</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 6 will be bound to `num`</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="dv">4</span><span class="op">&gt;</span> num <span class="op">&lt;</span>- <span class="ex">IO</span> 6</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>   <span class="cf">return</span> <span class="kw">(</span><span class="ex">num</span> + num<span class="kw">);</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="dv">5</span><span class="op">&gt;</span> return <span class="kw">(</span><span class="ex">6</span> + 6<span class="kw">)</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="dv">6</span><span class="op">&gt;</span> IO <span class="ex">12</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="ex">---</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="ex">stdout:</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="ex">6</span></span></code></pre></div>
 <p>Monads save the day. We can have our normal order evaluation and use it too. This is why we need monads.</p>
 <h1 id="further-reading">Further Reading</h1>
 <ul>
@@ -180,7 +172,7 @@
 *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
 *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
 var disqus_config = function () {
-this.page.url = "https://steven741.github.io/posts/2018-07-28-haskell-tutorial-1.html";  // Replace PAGE_URL with your page's canonical URL variable
+this.page.url = "https://swatson555.github.io/posts/2018-07-28-haskell-tutorial-1.html";  // Replace PAGE_URL with your page's canonical URL variable
 this.page.identifier = "Why We Need Monads"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 };
 var disqus_url = "https://steven741.github.io";
