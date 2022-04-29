@@ -28,6 +28,7 @@
 
 <hr>
 </header>
+</header>
 <p>A Lisp interpreter can be thought of as having 3 distinct parts. The Lisp reader, which takes a character string representation of a program and loads it into data for evaluation. The Lisp evaluator, which can compute an expression. The Lisp printer, which can take data and create a character string representation for displaying to a console. So, the first step is to create the Lisp reader so that we can have expressions to evaluate.</p>
 <p>The Lisp reader is essentially just a parser. So, we should have a way to lex the input string. Which is to say we want to turn a string representation of our expression into a series of tokens. Thankfully, Lisp is quite simple to lex. The only tokens we care about are parenthesis and symbols.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// We'll have 128 tokens. Each token can be up to 32 characters long.</span></span>
@@ -180,6 +181,7 @@
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
 <span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>In the next article we’ll augment this basic representation with syntax and datum and, create an evaluator for our language.</p>
+
 </article>
 <section>
 <h2>Reader Comments</h2>
