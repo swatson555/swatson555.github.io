@@ -6,7 +6,7 @@
 
 <meta name="description" content="Lisp is often known as one of the oldest programming languages. Indeed, it's conception can be traced back to research done by John McCarthy in 1960. In these series of articles I present an implementation of a Lisp written in the C language. These articles assume some familiarity in a Lisp like Scheme or Common Lisp.">
 
-<title>Roll A Lisp In C - Part 1</title>
+<title>Roll A Lisp In C - Reading</title>
 <link href="../css/syntax.css" rel="stylesheet">
 <link href="../css/style.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css?family=Noto+Sans|Noto+Serif" rel="stylesheet">
@@ -21,16 +21,26 @@
 <article>
 <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 <header>
-<h1>Roll A Lisp In C - Part 1</h1>
+<h1>Roll A Lisp In C - Reading</h1>
 <time datetime="2020-01-18">January 18, 2020</time>
 
 <p>Lisp is often known as one of the oldest programming languages. Indeed, it's conception can be traced back to research done by John McCarthy in 1960. In these series of articles I present an implementation of a Lisp written in the C language. These articles assume some familiarity in a Lisp like Scheme or Common Lisp.</p>
 
 <hr>
 </header>
+    <nav>
+        <h2>Table of Contents</h2>
+        <ul>
+        <li><a href="#reader">Reader</a></li>
+        <li><a href="#writter">Writter</a></li>
+        <li><a href="#read-eval-print-loop">Read, eval, print loop</a></li>
+        <li><a href="#further-reading">Further Reading</a></li>
+        </ul>
+    </nav>
 </header>
 <p>A Lisp interpreter can be thought of as having 3 distinct parts. The Lisp reader, which takes a character string representation of a program and loads it into data for evaluation. The Lisp evaluator, which can compute an expression. The Lisp printer, which can take data and create a character string representation for displaying to a console. So, the first step is to create the Lisp reader so that we can have expressions to evaluate.</p>
-<p>The Lisp reader is essentially just a parser. So, we should have a way to lex the input string. Which is to say we want to turn a string representation of our expression into a series of tokens. Thankfully, Lisp is quite simple to lex. The only tokens we care about are parenthesis and symbols.</p>
+<h1 id="reader">Reader</h1>
+<p>The Lisp reader is essentially just a parser. So, we should have a way to lexically analyze the input string. Which is to say we want to turn a string representation of our expression into a series of tokens. Thankfully, Lisp is quite simple to lexically analyze. The only tokens we care about are parenthesis and symbols.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// We'll have 128 tokens. Each token can be up to 32 characters long.</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> token<span class="op">[</span><span class="dv">128</span><span class="op">][</span><span class="dv">32</span><span class="op">];</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -72,17 +82,18 @@
 <span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>	   input<span class="op">[</span>ii<span class="op">]</span> <span class="op">!=</span> <span class="ch">'\n'</span> <span class="op">&amp;&amp;</span></span>
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>	   input<span class="op">[</span>ii<span class="op">]</span> <span class="op">!=</span> <span class="ch">'\0'</span><span class="op">)</span> <span class="op">{</span></span>
 <span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>	  token<span class="op">[</span>ti<span class="op">][</span>i<span class="op">]</span> <span class="op">=</span> input<span class="op">[</span>ii<span class="op">++];</span></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>	<span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>	  token<span class="op">[</span>ti<span class="op">][</span>i<span class="op">]</span> <span class="op">=</span> <span class="ch">'\0'</span><span class="op">;</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>	  <span class="cf">break</span><span class="op">;</span></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>	<span class="op">}</span></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>      <span class="op">++</span>ti<span class="op">;</span></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>      <span class="cf">break</span><span class="op">;</span></span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> ti<span class="op">;</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>This code will create 3 types of tokens. A left and right parenthesis token and a symbol token. It would be nice to have some way of representing iteration thru the tokens. An interface or a way of talking about the array.</p>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>	<span class="op">}</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>	  token<span class="op">[</span>ti<span class="op">][</span>i<span class="op">]</span> <span class="op">=</span> <span class="ch">'\0'</span><span class="op">;</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>	  <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>	<span class="op">}</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>      <span class="op">++</span>ti<span class="op">;</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>      <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> ti<span class="op">;</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This code will create 3 types of tokens. A left and right parenthesis token and a symbol token. It would be nice to have some way of representing iteration through the tokens. An interface or a way of talking about the array.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> curtok<span class="op">;</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span><span class="op">*</span> nexttok<span class="op">()</span> <span class="op">{</span></span>
@@ -93,7 +104,7 @@
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> token<span class="op">[</span>curtok<span class="op">];</span></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>This will be our way of talking about the token array. We can take the next token in the array or, look at the current token in the stream.</p>
-<p>Our expressions are held in list structure so, we need list structured memory.</p>
+<p>Our expressions are held in list structure so, we should use list structured memory.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">void</span><span class="op">*</span> car<span class="op">;</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">void</span><span class="op">*</span> cdr<span class="op">;</span></span>
@@ -110,9 +121,9 @@
 <span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> ispair<span class="op">(</span><span class="dt">void</span><span class="op">*</span> x<span class="op">)</span> <span class="op">{</span></span>
 <span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> x <span class="op">&gt;=</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)&amp;</span>text <span class="op">&amp;&amp;</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>         x <span class="op">&lt;=</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)&amp;</span>text<span class="op">[</span><span class="dv">256</span><span class="op">];</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        x <span class="op">&lt;</span>  <span class="op">(</span><span class="dt">void</span><span class="op">*)&amp;</span>text<span class="op">[</span><span class="dv">256</span><span class="op">];</span></span>
 <span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>Here we’re using pairs to represent list memory. Our interface to this memory is <code>cons</code> and <code>ispair</code>. <code>cons</code> does exactly what we would want <code>cons</code> to do. It makes an new pair from unused memory. <code>ispair</code> is just way to check if the thing we’re refering to is in list memory or not.</p>
+<p>Here we’re using pairs to represent list memory. Our interface to this memory is <code>cons</code> and <code>ispair</code>. <code>cons</code> does exactly what we would want <code>cons</code> to do. It makes an new pair from unused memory. <code>ispair</code> is just way to check if the thing we’re referring to is in list memory or not.</p>
 <p>We now have enough infrastructure laid out to begin implementing the reader.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> read<span class="op">(</span><span class="dt">char</span><span class="op">*</span> ln<span class="op">)</span> <span class="op">{</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Initialize the lexer and list memory.</span></span>
@@ -136,71 +147,130 @@
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span><span class="op">(</span>tok<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">==</span> <span class="ch">')'</span><span class="op">)</span> <span class="op">{</span></span>
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    nexttok<span class="op">();</span></span>
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> NULL<span class="op">;</span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span><span class="op">*</span> fst <span class="op">=</span> read_exp<span class="op">();</span></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span><span class="op">*</span> snd <span class="op">=</span> read_list<span class="op">();</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cons<span class="op">(</span>fst<span class="op">,</span> snd<span class="op">);</span></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>This is the Lisp reader. <code>read</code> will take in a character string representation of our program and, return a pointer to it’s Lisp representation.</p>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span><span class="op">*</span> fst <span class="op">=</span> read_exp<span class="op">();</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span><span class="op">*</span> snd <span class="op">=</span> read_list<span class="op">();</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cons<span class="op">(</span>fst<span class="op">,</span> snd<span class="op">);</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This is the Lisp reader. <code>read</code> will take in a character string representation of our program and, return a pointer to it’s Lisp representation. Consider an expresion:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode scheme"><code class="sourceCode scheme"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>(<span class="kw">display</span> (<span class="kw">read</span>))</span></code></pre></div>
+<p>First this string is lexically analyzed. It’s turned into something of the following when passed to <code>lexer</code>:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> token<span class="op">[</span><span class="dv">128</span><span class="op">][</span><span class="dv">32</span><span class="op">];</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>token<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> <span class="st">&quot;(&quot;</span><span class="op">;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>token<span class="op">[</span><span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="st">&quot;display&quot;</span><span class="op">;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>token<span class="op">[</span><span class="dv">2</span><span class="op">]</span> <span class="op">=</span> <span class="st">&quot;(&quot;</span><span class="op">;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>token<span class="op">[</span><span class="dv">3</span><span class="op">]</span> <span class="op">=</span> <span class="st">&quot;read&quot;</span><span class="op">;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>token<span class="op">[</span><span class="dv">4</span><span class="op">]</span> <span class="op">=</span> <span class="st">&quot;)&quot;</span><span class="op">;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>token<span class="op">[</span><span class="dv">5</span><span class="op">]</span> <span class="op">=</span> <span class="st">&quot;)&quot;</span><span class="op">;</span></span></code></pre></div>
+<p>Now, let’s trace the reader routine to try to get some intuition.</p>
+<pre><code>read_exp:
+tok &lt;- token[0] ; &quot;(&quot;
+call read_list
+
+read_list:
+tok &lt;- token[1]   ; &quot;display&quot;
+fst &lt;- read_exp   ; &quot;display&quot;
+snd &lt;- read_list  ; (&quot;read&quot;)
+cons (fst snd)
+
+read_exp:
+tok &lt;- token[1]  ; &quot;display&quot;
+&quot;display&quot;
+
+read_list:
+tok &lt;- token[2]   ; &quot;(&quot;
+fst &lt;- read_exp   ; (&quot;read&quot;)
+snd &lt;- read_list  ; NULL
+cons (fst snd)
+
+read_exp:
+tok &lt;- token[2]  ; &quot;(&quot;
+call read_list
+
+read_list:
+tok &lt;- token[3]   ; &quot;read&quot;
+fst &lt;- read_exp   ; &quot;read&quot;
+snd &lt;- read_list  ; NULL
+cons (fst snd)
+
+read_exp:
+tok &lt;- token[3]   ; &quot;read&quot;
+&quot;read&quot;
+
+read_list:
+tok &lt;- token[4]  ; &quot;)&quot;
+NULL
+
+read_list:
+tok &lt;- token[5]  ; &quot;)&quot;
+NULL</code></pre>
+<h1 id="writter">Writter</h1>
 <p>Now that we have a representation of lists and symbols we can print them out.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> print<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  print_exp<span class="op">(</span>exp<span class="op">);</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  printf<span class="op">(</span><span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> print_exp<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span><span class="op">(</span>ispair<span class="op">(</span>exp<span class="op">))</span> <span class="op">{</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;(&quot;</span><span class="op">);</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    print_list<span class="op">(</span>exp<span class="op">);</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;%s&quot;</span><span class="op">,</span> exp<span class="op">);</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> print_list<span class="op">(</span>Pair<span class="op">*</span> list<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span><span class="op">(</span>list<span class="op">-&gt;</span>cdr <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    print_exp<span class="op">(</span>list<span class="op">-&gt;</span>car<span class="op">);</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;)&quot;</span><span class="op">);</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    print_exp<span class="op">(</span>list<span class="op">-&gt;</span>car<span class="op">);</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot; &quot;</span><span class="op">);</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    print_list<span class="op">(</span>list<span class="op">-&gt;</span>cdr<span class="op">);</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> print<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  print_exp<span class="op">(</span>exp<span class="op">);</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  printf<span class="op">(</span><span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> print_exp<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span><span class="op">(</span>ispair<span class="op">(</span>exp<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;(&quot;</span><span class="op">);</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    print_list<span class="op">(</span>exp<span class="op">);</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;%s&quot;</span><span class="op">,</span> exp<span class="op">);</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> print_list<span class="op">(</span>Pair<span class="op">*</span> list<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span><span class="op">(</span>list<span class="op">-&gt;</span>cdr <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    print_exp<span class="op">(</span>list<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;)&quot;</span><span class="op">);</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    print_exp<span class="op">(</span>list<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot; &quot;</span><span class="op">);</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    print_list<span class="op">(</span>list<span class="op">-&gt;</span>cdr<span class="op">);</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h1 id="read-eval-print-loop">Read, eval, print loop</h1>
 <p>Putting everything together we can make a basic REPL interface.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">char</span><span class="op">**</span> argv<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  printf<span class="op">(</span><span class="st">&quot;Lisp REPL</span><span class="sc">\n\n</span><span class="st">&quot;</span><span class="op">);</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">char</span> buffer<span class="op">[</span><span class="dv">256</span><span class="op">];</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span><span class="op">(;;)</span> <span class="op">{</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;&gt;&gt; &quot;</span><span class="op">);</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    fgets<span class="op">(</span>buffer<span class="op">,</span> <span class="dv">256</span><span class="op">,</span> stdin<span class="op">);</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    print<span class="op">(</span>read<span class="op">(</span>buffer<span class="op">));</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>In the next article we’ll augment this basic representation with syntax and datum and, create an evaluator for our language.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> eval<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> exp<span class="op">;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">char</span><span class="op">**</span> argv<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  printf<span class="op">(</span><span class="st">&quot;Lisp REPL</span><span class="sc">\n\n</span><span class="st">&quot;</span><span class="op">);</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  printf<span class="op">(</span><span class="st">&quot;&gt;&gt; &quot;</span><span class="op">);</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">char</span> buffer<span class="op">[</span><span class="dv">256</span><span class="op">];</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">while</span><span class="op">(</span>fgets<span class="op">(</span>buffer<span class="op">,</span> <span class="dv">256</span><span class="op">,</span> stdin<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    print<span class="op">(</span>eval<span class="op">(</span>read<span class="op">(</span>buffer<span class="op">)));</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;&gt;&gt; &quot;</span><span class="op">);</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>In this article we’ve gone over a Lisp reader and writter. We’ve seen how it represents and stores it’s data and, how to access that data for printing to a user. We’ve seen how to take a C string of letters and, turn this into tokens of that string. We’ve seen how to take tokens of a Lisp and, parse those tokens into list structured memory. Now we have enough to start evaluating different syntactic expressions.</p>
+<h1 id="further-reading">Further Reading</h1>
+<ul>
+<li><a href="https://gist.github.com/swatson555/893956057506b63c04f20b14f9e24cdc">Github Gist</a></li>
+</ul>
 
 </article>
 <section>
 <h2>Reader Comments</h2>
 <div id="disqus_thread"></div>
 <script>
-/**
-*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
-*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
-var disqus_config = function () {
-this.page.url = "https://swatson555.github.io/posts/2020-01-18-make-a-lisp-1.html";  // Replace PAGE_URL with your page's canonical URL variable
-this.page.identifier = "Roll A Lisp In C - Part 1"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
-};
-var disqus_url = "https://steven741.github.io";
-(function() { // DON'T EDIT BELOW THIS LINE
-var d = document, s = d.createElement('script');
-s.src = 'https://steven741.disqus.com/embed.js';
-s.setAttribute('data-timestamp', +new Date());
-(d.head || d.body).appendChild(s);
-})();
+  var disqus_config = function () {
+      this.page.url = "https://swatson555.github.io/posts/2020-01-18-make-a-lisp-1.html";
+      this.page.identifier = "Roll A Lisp In C - Reading";
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+      var d = document, s = d.createElement('script');
+      s.src = 'https://swatson555.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+  })();
 </script>
 <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </section>
