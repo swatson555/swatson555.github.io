@@ -206,7 +206,8 @@ NULL
 read_list:
 tok &lt;- token[5]  ; &quot;)&quot;
 NULL</code></pre>
-<p>In this syntax string the first token <code>read_exp</code> will see is a “(” so, it will call <code>read_list</code>. Consider what’s in the next token. It’s “display” and, <code>read_list</code> will only process this by calling <code>read_exp</code>. You can think of a call to <code>read_list</code> as a sequence of calling <code>read_exp</code> several times. At this point the next token is “(” so, <code>read_exp</code> will call <code>read_list</code> to start this process again.</p>
+<p>In this syntax string the first token <code>read_exp</code> will see is a “(” so, it will call <code>read_list</code>. Consider what’s in the next token. It’s “display” and, <code>read_list</code> will only process this by calling <code>read_exp</code>. At this point the next token is “(” so, <code>read_exp</code> will call <code>read_list</code> to start this process again.</p>
+<p>You can think of a call to <code>read_list</code> as a sequence of calling <code>read_exp</code> several times. So that, <code>cons(read_exp, cons(read_exp, ... | NULL))</code> becomes the operation.</p>
 <h1 id="writter">Writter</h1>
 <p>Now that we have a representation of lists and symbols we can print them out.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> print<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
