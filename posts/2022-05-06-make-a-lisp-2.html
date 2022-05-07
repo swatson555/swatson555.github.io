@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="description" content="Evaluation is the process of taking an expression and producing a value. In this article I show how to take expresions  held in list structured data and produce values.">
+
+<title>Roll A Lisp In C - Evaluation</title>
+<link href="../css/syntax.css" rel="stylesheet">
+<link href="../css/style.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Noto+Sans|Noto+Serif" rel="stylesheet">
+</head>
+<body>
+<nav class="header">
+<span><a href="../" target="_self"><h1>Steven Watson's<br>Personal Journal</h1></a></span>
+<ul>
+<li><a href="https://github.com/swatson555/" target="_self"><span>repos</span></a></li>
+</ul>
+</nav>
+<article>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<header>
+<h1>Roll A Lisp In C - Evaluation</h1>
+<time datetime="2022-05-06">May 06, 2022</time>
+
+<p>Evaluation is the process of taking an expression and producing a value. In this article I show how to take expresions  held in list structured data and produce values.</p>
+
+<hr>
+</header>
+    <nav>
+        <h2>Table of Contents</h2>
+        <ul>
+        <li><a href="#evaluator">Evaluator</a></li>
+        <li><a href="#conclusion">Conclusion</a></li>
+        <li><a href="#further-reading">Further Reading</a></li>
+        </ul>
+    </nav>
+</header>
+<p>In the previous article we went over how to represent Lisp data in C. With this representation we can begin to implement a simple evaluator.</p>
+<h1 id="evaluator">Evaluator</h1>
+<p>The evaluator presented in this article will achieve 2 things. It will evaluate simple arithmetic expressions and, it will be able to branch to a consequent or alternative expression given a predicate.</p>
+<h2 id="arithmetic">Arithmetic</h2>
+<p>The arithmetic expressions we’d like to evaluate will be the following:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode scheme"><code class="sourceCode scheme"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">;; (&lt;operator&gt; &lt;exp&gt; &lt;exp&gt;) =&gt; &lt;num&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">;;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">;; where &lt;operator&gt; &lt;=&gt; &lt;+ | - | * | /&gt;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">;; where &lt;num&gt; &lt;=&gt; Integer</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">;; where &lt;symbol&gt; &lt;=&gt; Text</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">;; where &lt;exp&gt; &lt;=&gt; &lt;(&lt;operator&gt; &lt;exp&gt; &lt;exp&gt;) | &lt;num&gt; | &lt;symbol&gt;&gt;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">;; so that,</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>(<span class="op">+</span> <span class="dv">1</span> <span class="dv">2</span>) <span class="op">=&gt;</span> <span class="dv">3</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>(<span class="op">+</span> (<span class="op">+</span> <span class="dv">3</span> <span class="dv">2</span>) <span class="dv">5</span>) <span class="op">=&gt;</span> <span class="dv">10</span></span></code></pre></div>
+<p>First, we’ll create a new type that will allow working with list structured data easier.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> Text <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">char</span><span class="op">*</span> car<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">struct</span> Text<span class="op">*</span> cdr<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> Text<span class="op">;</span></span></code></pre></div>
+<p>This allows different parts of a read expression to be accessed simply and, the evaluation of addition can be implemented as follows:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> ret<span class="op">[</span><span class="dv">32</span><span class="op">];</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> eval<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> eval_exp<span class="op">(</span>exp<span class="op">);</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> eval_exp<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>istext<span class="op">(</span>exp<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    Text<span class="op">*</span> text <span class="op">=</span> exp<span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span><span class="st">&quot;+&quot;</span><span class="op">,</span> text<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> left <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> right <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>      sprintf<span class="op">(</span>ret<span class="op">,</span> <span class="st">&quot;%d&quot;</span><span class="op">,</span> atoi<span class="op">(</span>left<span class="op">)</span> <span class="op">+</span> atoi<span class="op">(</span>right<span class="op">));</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> ret<span class="op">;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> exp<span class="op">;</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Likewise other arithmetic operators can be implemented in the same way.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> eval_exp<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>istext<span class="op">(</span>exp<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    Text<span class="op">*</span> text <span class="op">=</span> exp<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span><span class="st">&quot;-&quot;</span><span class="op">,</span> text<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> left <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> right <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>      sprintf<span class="op">(</span>ret<span class="op">,</span> <span class="st">&quot;%d&quot;</span><span class="op">,</span> atoi<span class="op">(</span>left<span class="op">)</span> <span class="op">-</span> atoi<span class="op">(</span>right<span class="op">));</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> ret<span class="op">;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span><span class="st">&quot;*&quot;</span><span class="op">,</span> text<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> left <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> right <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>      sprintf<span class="op">(</span>ret<span class="op">,</span> <span class="st">&quot;%d&quot;</span><span class="op">,</span> atoi<span class="op">(</span>left<span class="op">)</span> <span class="op">*</span> atoi<span class="op">(</span>right<span class="op">));</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> ret<span class="op">;</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span><span class="st">&quot;/&quot;</span><span class="op">,</span> text<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> left <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> right <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>      sprintf<span class="op">(</span>ret<span class="op">,</span> <span class="st">&quot;%d&quot;</span><span class="op">,</span> atoi<span class="op">(</span>left<span class="op">)</span> <span class="op">/</span> atoi<span class="op">(</span>right<span class="op">));</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> ret<span class="op">;</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> exp<span class="op">;</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 id="predicates">Predicates</h2>
+<p>The predicate we’d like to implement will be the following:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode scheme"><code class="sourceCode scheme"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">;; (= &lt;exp&gt; &lt;exp&gt;) =&gt; &lt;predicate&gt;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">;;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">;; where &lt;predicate&gt; &lt;=&gt; &lt;#t | #f&gt;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">;; so that,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>(<span class="op">=</span> <span class="dv">1</span> <span class="dv">2</span>) <span class="op">=&gt;</span> <span class="dv">#f</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>(<span class="op">=</span> <span class="dv">1</span> <span class="dv">1</span>) <span class="op">=&gt;</span> <span class="dv">#t</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>(<span class="op">=</span> (<span class="op">+</span> <span class="dv">1</span> <span class="dv">1</span>) <span class="dv">2</span>) <span class="op">=&gt;</span> <span class="dv">#t</span></span></code></pre></div>
+<p>The implementation is simple. Evaluate the left and right expressions and, see if they’re the same symbol.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> eval_exp<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>istext<span class="op">(</span>exp<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    Text<span class="op">*</span> text <span class="op">=</span> exp<span class="op">;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span><span class="st">&quot;=&quot;</span><span class="op">,</span> exp<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> left <span class="op">=</span> eval_exp<span class="op">(</span>exp<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> right <span class="op">=</span> eval_exp<span class="op">(</span>exp<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> strcmp<span class="op">(</span>left<span class="op">,</span> right<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">?</span> <span class="st">&quot;#t&quot;</span> <span class="op">:</span> <span class="st">&quot;#f&quot;</span><span class="op">;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> exp<span class="op">;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 id="branching">Branching</h2>
+<p>The branching we’d like to implement will be the following:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode scheme"><code class="sourceCode scheme"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">;; (if &lt;predicate&gt; &lt;exp&gt; &lt;exp&gt;)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">;;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">;; so that,</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>(<span class="kw">if</span> <span class="dv">#t</span> (<span class="op">+</span> <span class="dv">1</span> <span class="dv">2</span>) (<span class="op">+</span> <span class="dv">2</span> <span class="dv">3</span>)) <span class="op">=&gt;</span> <span class="dv">3</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>(<span class="kw">if</span> <span class="dv">#f</span> (<span class="op">+</span> <span class="dv">1</span> <span class="dv">2</span>) (<span class="op">+</span> <span class="dv">2</span> <span class="dv">3</span>)) <span class="op">=&gt;</span> <span class="dv">5</span></span></code></pre></div>
+<p>The implementation can be done by evaluating the conditional and evaluating either the consequent expression or the alternative expression.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> eval_exp<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>istext<span class="op">(</span>exp<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    Text<span class="op">*</span> text <span class="op">=</span> exp<span class="op">;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span><span class="st">&quot;if&quot;</span><span class="op">,</span> text<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> conditional <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span><span class="st">&quot;#t&quot;</span><span class="op">,</span> text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>      <span class="cf">else</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> exp<span class="op">;</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h1 id="conclusion">Conclusion</h1>
+<p>In this article we’ve seen how to evaluate simple arithmetic expressions. We’ve also seen how to evaluate equality in a naive way and, how to branch on a given value. We can now produce values that can be stored in an environment.</p>
+<h1 id="further-reading">Further Reading</h1>
+<p><a href="https://gist.github.com/swatson555/b62222d57d6aeac7ba692e1bdb1b511d">Github Gist</a></p>
+
+</article>
+<section>
+<h2>Reader Comments</h2>
+<div id="disqus_thread"></div>
+<script>
+  var disqus_config = function () {
+      this.page.url = "https://swatson555.github.io/posts/2022-05-06-make-a-lisp-2.html";
+      this.page.identifier = "Roll A Lisp In C - Evaluation";
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+      var d = document, s = d.createElement('script');
+      s.src = 'https://swatson555.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+<footer>
+</footer>
+</body>
+</html>
