@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="description" content="This review goes over two undergraduate textbooks on compilers that have been used autodidactically. The books are shown compared to each other, in the context of their supplementary material, and in of themselves.">
+
+<title>Essentials of Compilation & The Tiger Book</title>
+<link href="../css/syntax.css" rel="stylesheet">
+<link href="../css/style.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Noto+Sans|Noto+Serif" rel="stylesheet">
+</head>
+<body>
+<nav class="header">
+<span><a href="../" target="_self"><h1>Steven Watson's<br>Personal Journal</h1></a></span>
+<ul>
+<li><a href="https://github.com/swatson555/" target="_self"><span>repos</span></a></li>
+</ul>
+</nav>
+<article>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<header>
+<h1>Essentials of Compilation & The Tiger Book</h1>
+<time datetime="2022-05-23">May 23, 2022</time>
+
+<p>This review goes over two undergraduate textbooks on compilers that have been used autodidactically. The books are shown compared to each other, in the context of their supplementary material, and in of themselves.</p>
+
+<hr>
+</header>
+    <nav>
+        <h2>Table of Contents</h2>
+        <ul>
+        <li><a href="#criteria">Criteria</a></li>
+        <li><a href="#pragmatism">Pragmatism</a></li>
+        <li><a href="#pedagogy">Pedagogy</a></li>
+        <li><a href="#engagement">Engagement</a></li>
+        <li><a href="#perspective">Perspective</a></li>
+        </ul>
+    </nav>
+</header>
+<p>There are two books that I have considered opinions on. Essentials of Compilation and Modern Compiler Implementation in C (the tiger book). Both books serve as undergraduate texts on compiler implementation. Modern Compiler Implementation in C was published in ’97 and, was written to be a replacement to popular older books that didn’t have the insight of the significant research that had been published since. Essentials of Compilation was made available recently and, was written for Indiana University’s undergraduate compiler course.</p>
+<h1 id="criteria">Criteria</h1>
+<p>There are a few criteria which I’ll focus on in this review.</p>
+<ul>
+<li><p>Pragmatism of content.</p></li>
+<li><p>Pedagogical quality.</p></li>
+<li><p>Quality of engagement.</p></li>
+<li><p>Broader perspective.</p></li>
+</ul>
+<h1 id="pragmatism">Pragmatism</h1>
+<p>The tiger book is a very pragmatic book. It presents a language, the tiger language, whose semantics are only slightly larger than C’s semantics. The book has <a href="https://www.cs.princeton.edu/~appel/modern/c/project.html">starter code</a> available on it’s <a href="https://www.cs.princeton.edu/~appel/modern/c/">website</a>. It’s also well studied and, completed compilers are available on Github. On it’s own, just the book, there isn’t enough material to complete the chapters in a reasonable amount of time or effort. The book requires more than just the material presented.</p>
+<p>Essentials of Compilation presents a subset of Racket for compilation which is also the implementation language of the compiler. The book has a lot of supporting material. There are <a href="https://iucompilercourse.github.io/IU-P423-P523-E313-E513-Fall-2020/">video lectures</a> and <a href="https://github.com/IUCompilerCourse/public-student-support-code">starter code</a> available on Github. The book on it’s own is enough to study the techniques of the compiler it presents.</p>
+<p>Both books present strategies for compilation that generalize well to languages whose semantics are around the size of C and, both books prepare learners to work on larger compilers or, compilers for other languages well. The tiger book in particular being a more pragmatic book in almost every regard.</p>
+<h1 id="pedagogy">Pedagogy</h1>
+<p>The pedagogical quality of both books are inconsistent. Formal language is introduced in some places but is often replaced with more colloquial terms later. Essentials of Compilation especially has this problem where formal terms for concepts are omitted in totality which is a strange choice considering it’s emphasis on language.</p>
+<p>Both books introduce a fair amount of vocabulary and concepts however, neither book prepares learners to fully understand research papers in computer science. Neither book goes over virtual machines for example. Both books present compilation in the same way. It presents them as taking an entire expression and translating it to assembly language via a series of sequential passes.</p>
+<h1 id="engagement">Engagement</h1>
+<p>Essentials of Compilation is a very attractive book. It uses and compiles a semantically rich language. Each chapter of the book ends with a working compiler for a new language. It shows the broader perspective of the techniques you’re using in this way and, keeps the learner engaged and motivated.</p>
+<p>The tiger book, on it’s own, doesn’t engage it’s reader well and, it’s starter code has strange expectation from the learner. The language it implements is minimal and, is only of interest to computer scientists. The book doesn’t give enough perspective of why one would study a certain concept before or after another. The book requires a lot of supplementary material to be engaging.</p>
+<h1 id="perspective">Perspective</h1>
+<p>These books were meant to be used in undergraduate courses and, serve as supporting material for a first course in compilers. So, how well do these books do this? They’re both reasonable at it. They present common techniques of compiling languages well. Especially the tiger book which has a second part going over general concepts of less common compilation techniques. However, they both pedagogically lack perspective of computer science as a whole. They both present a compiler in a single way and, don’t give students enough common vocabulary to do or study research on compilers.</p>
+
+</article>
+<section>
+<h2>Reader Comments</h2>
+<div id="disqus_thread"></div>
+<script>
+  var disqus_config = function () {
+      this.page.url = "https://swatson555.github.io/posts/2022-05-23-compiler-books.html";
+      this.page.identifier = "Essentials of Compilation & The Tiger Book";
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+      var d = document, s = d.createElement('script');
+      s.src = 'https://swatson555.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+<footer>
+</footer>
+</body>
+</html>
