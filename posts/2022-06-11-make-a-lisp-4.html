@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="description" content="Procedures provide a way of abstracting imperative knowledge that can be represented in a language. In this article I show a technique for implementing lexically scoped first-class closures. This is the concluding article in the Roll A Lisp In C series.">
+
+<title>Roll A Lisp In C - Procedures</title>
+<link href="../css/syntax.css" rel="stylesheet">
+<link href="../css/style.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Noto+Sans|Noto+Serif" rel="stylesheet">
+</head>
+<body>
+<nav class="header">
+<span><a href="../" target="_self"><h1>Steven Watson's<br>Personal Journal</h1></a></span>
+<ul>
+<li><a href="https://github.com/swatson555/" target="_self"><span>repos</span></a></li>
+</ul>
+</nav>
+<article>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<header>
+<h1>Roll A Lisp In C - Procedures</h1>
+<time datetime="2022-06-11">June 11, 2022</time>
+
+<p>Procedures provide a way of abstracting imperative knowledge that can be represented in a language. In this article I show a technique for implementing lexically scoped first-class closures. This is the concluding article in the Roll A Lisp In C series.</p>
+
+<hr>
+</header>
+    <nav>
+        <h2>Table of Contents</h2>
+        <ul>
+        <li><a href="#environments">Environments</a></li>
+        <li><a href="#evaluator">Evaluator</a></li>
+        <li><a href="#conclusion">Conclusion</a></li>
+        <li><a href="#further-reading">Further Reading</a></li>
+        </ul>
+    </nav>
+<h3 id="roll-a-lisp-in-c">Roll A Lisp In C</h3>
+<ul>
+<li><a href="2020-01-18-make-a-lisp-1.html">Reading</a></li>
+<li><a href="2022-05-06-make-a-lisp-2.html">Evaluation</a></li>
+<li><a href="2022-06-04-make-a-lisp-3.html">Environments</a></li>
+<li><a href="2022-06-11-make-a-lisp-4.html"><strong>Procedures</strong></a></li>
+</ul>
+<p>In the previous article we showed a simple way of creating environments structures using pairs. But, there’s still something our language is missing and, that’s a way of creating abstraction. So, presented in this article is a technique for implementing first-class closures.</p>
+<h1 id="environments">Environments</h1>
+<p>With first-class closures the simple environment data structure we’ve been using isn’t enough and needs to be augmented. Instead of just a symbol and value pair we have a more elaborate structure containing 32 pairs, a pointer into those pairs and, a pointer to another closure environment.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">char</span> sym<span class="op">[</span><span class="dv">32</span><span class="op">];</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">void</span><span class="op">*</span> val<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> Entry<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> Env <span class="op">{</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  Entry entry<span class="op">[</span><span class="dv">32</span><span class="op">];</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  Entry<span class="op">*</span> entryptr<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">struct</span> Env<span class="op">*</span> next<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> Env<span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>Env frame<span class="op">[</span><span class="dv">128</span><span class="op">];</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>Env<span class="op">*</span> frameptr <span class="op">=</span> frame<span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>Env<span class="op">*</span> extend<span class="op">(</span>Env<span class="op">*</span> env<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  frameptr<span class="op">-&gt;</span>next <span class="op">=</span> env<span class="op">;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  frameptr<span class="op">-&gt;</span>entryptr <span class="op">=</span> frameptr<span class="op">-&gt;</span>entry<span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> frameptr<span class="op">++;</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This has a lot of parity with the previous environment data structure that was used before except now it’s given a name and has a reference to another environment. Because <code>Env</code> holds a reference to another environment it becomes straight forward to implement an <code>extend</code> function which creates an enclosing environment.</p>
+<p><code>get</code> needs to be modified to work with <code>Env</code> but, it’s a very simple modification. <code>get</code> needs to look in the <code>Env</code> for a value or the <code>Env</code>’s enclosing environment.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> get<span class="op">(</span><span class="dt">void</span><span class="op">*</span> sym<span class="op">,</span> Env<span class="op">*</span> env<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  Entry<span class="op">*</span> seek <span class="op">=</span> env<span class="op">-&gt;</span>entryptr<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(;</span>seek <span class="op">!=</span> env<span class="op">-&gt;</span>entry<span class="op">-</span><span class="dv">1</span><span class="op">;</span> <span class="op">--</span>seek<span class="op">)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span>seek<span class="op">-&gt;</span>sym<span class="op">,</span> sym<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> seek<span class="op">-&gt;</span>val<span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Look in the next Environment</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> get<span class="op">(</span>sym<span class="op">,</span> env<span class="op">-&gt;</span>next<span class="op">);</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><code>put</code> remains mostly the same it just acts on an <code>Env</code> instead of a global symbol-value store.</p>
+<p>Up to this point we’ve used syntactic forms for implementing procedures but, now procedures can be values that exist in the environment.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>Env global <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">{{</span> <span class="op">.</span>sym <span class="op">=</span> <span class="st">&quot;+&quot;</span><span class="op">,</span> <span class="op">.</span>val<span class="op">=(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">1</span> <span class="op">},</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>   <span class="op">{</span> <span class="op">.</span>sym <span class="op">=</span> <span class="st">&quot;-&quot;</span><span class="op">,</span> <span class="op">.</span>val<span class="op">=(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">2</span> <span class="op">},</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>   <span class="op">{</span> <span class="op">.</span>sym <span class="op">=</span> <span class="st">&quot;*&quot;</span><span class="op">,</span> <span class="op">.</span>val<span class="op">=(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">3</span> <span class="op">},</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>   <span class="op">{</span> <span class="op">.</span>sym <span class="op">=</span> <span class="st">&quot;/&quot;</span><span class="op">,</span> <span class="op">.</span>val<span class="op">=(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">4</span> <span class="op">},</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>   <span class="op">{</span> <span class="op">.</span>sym <span class="op">=</span> <span class="st">&quot;car&quot;</span><span class="op">,</span> <span class="op">.</span>val<span class="op">=(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">5</span> <span class="op">},</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>   <span class="op">{</span> <span class="op">.</span>sym <span class="op">=</span> <span class="st">&quot;cdr&quot;</span><span class="op">,</span> <span class="op">.</span>val<span class="op">=(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">6</span> <span class="op">},</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>   <span class="op">{</span> <span class="op">.</span>sym <span class="op">=</span> <span class="st">&quot;=&quot;</span><span class="op">,</span> <span class="op">.</span>val<span class="op">=(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">7</span> <span class="op">},</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>   <span class="op">{</span> <span class="op">.</span>sym <span class="op">=</span> <span class="st">&quot;cons&quot;</span><span class="op">,</span> <span class="op">.</span>val<span class="op">=(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">8</span> <span class="op">},</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>   <span class="op">{</span> <span class="op">.</span>sym <span class="op">=</span> <span class="st">&quot;list&quot;</span><span class="op">,</span> <span class="op">.</span>val<span class="op">=(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">9</span> <span class="op">},},</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">.</span>entryptr <span class="op">=</span> global<span class="op">.</span>entry<span class="op">+</span><span class="dv">9</span><span class="op">,</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  NULL</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Now, we have a global environment that <code>eval</code> can get values from. In this case the built-in procedures that we’ve implemented before are assigned reserved values that <code>apply</code> knows about.</p>
+<h1 id="evaluator">Evaluator</h1>
+<p>With procedures as first-class values there’s no need to have syntactic forms in <code>eval</code> to evaluate a procedure. Instead <code>eval</code> has a general case of procedure application that calls <code>apply</code> with the procedure value and arguments.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> eval_exp<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">,</span> Env<span class="op">*</span> env<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>istext<span class="op">(</span>exp<span class="op">)</span> <span class="op">||</span> islist<span class="op">(</span>exp<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    Text<span class="op">*</span> text <span class="op">=</span> exp<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> fun <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> apply<span class="op">(</span>fun<span class="op">,</span> text<span class="op">-&gt;</span>cdr<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">// evaluate the symbol in the environment if it's not self-evaluating.</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> isdigit<span class="op">(*((</span><span class="dt">char</span><span class="op">*)</span>exp<span class="op">))</span> <span class="op">||</span> strcmp<span class="op">(</span>exp<span class="op">,</span> <span class="st">&quot;#f&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">||</span> strcmp<span class="op">(</span>exp<span class="op">,</span> <span class="st">&quot;#t&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">?</span> exp <span class="op">:</span> get<span class="op">(</span>exp<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The syntactic forms in <code>eval</code> are now replaced with a call to <code>apply</code>.</p>
+<h2 id="apply"><code>apply</code></h2>
+<p>The results of the built-in procedures are now in <code>apply</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> apply<span class="op">(</span><span class="dt">void</span><span class="op">*</span> func<span class="op">,</span> Text<span class="op">*</span> args<span class="op">,</span> Env<span class="op">*</span> env<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">char</span> evret<span class="op">[</span><span class="dv">32</span><span class="op">];</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>func <span class="op">==</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> left <span class="op">=</span> atoi<span class="op">(</span>eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">));</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> right <span class="op">=</span> atoi<span class="op">(</span>eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">));</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    sprintf<span class="op">(</span>evret<span class="op">,</span> <span class="st">&quot;%d&quot;</span><span class="op">,</span> left<span class="op">+</span>right<span class="op">);</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cpysym<span class="op">(</span>evret<span class="op">);</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>func <span class="op">==</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">2</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> left <span class="op">=</span> atoi<span class="op">(</span>eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">));</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> right <span class="op">=</span> atoi<span class="op">(</span>eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">));</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    sprintf<span class="op">(</span>evret<span class="op">,</span> <span class="st">&quot;%d&quot;</span><span class="op">,</span> left<span class="op">-</span>right<span class="op">);</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cpysym<span class="op">(</span>evret<span class="op">);</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>func <span class="op">==</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">3</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> left <span class="op">=</span> atoi<span class="op">(</span>eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">));</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> right <span class="op">=</span> atoi<span class="op">(</span>eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">));</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    sprintf<span class="op">(</span>evret<span class="op">,</span> <span class="st">&quot;%d&quot;</span><span class="op">,</span> left<span class="op">*</span>right<span class="op">);</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cpysym<span class="op">(</span>evret<span class="op">);</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>func <span class="op">==</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">4</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> left <span class="op">=</span> atoi<span class="op">(</span>eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">));</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> right <span class="op">=</span> atoi<span class="op">(</span>eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">));</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    sprintf<span class="op">(</span>evret<span class="op">,</span> <span class="st">&quot;%d&quot;</span><span class="op">,</span> left<span class="op">/</span>right<span class="op">);</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cpysym<span class="op">(</span>evret<span class="op">);</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>func <span class="op">==</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">5</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    Pair<span class="op">*</span> pair <span class="op">=</span> eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pair<span class="op">-&gt;</span>car<span class="op">;</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>func <span class="op">==</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">6</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    Pair<span class="op">*</span> pair <span class="op">=</span> eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pair<span class="op">-&gt;</span>cdr<span class="op">;</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>func <span class="op">==</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">7</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span><span class="op">*</span> left <span class="op">=</span> eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span><span class="op">*</span> right <span class="op">=</span> eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span><span class="op">(</span>left <span class="op">&amp;&amp;</span> right<span class="op">)</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> strcmp<span class="op">(</span>left<span class="op">,</span> right<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">?</span> <span class="st">&quot;#t&quot;</span> <span class="op">:</span> <span class="st">&quot;#f&quot;</span><span class="op">;</span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> left <span class="op">==</span> right <span class="op">?</span> <span class="st">&quot;#t&quot;</span> <span class="op">:</span> <span class="st">&quot;#f&quot;</span><span class="op">;</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>func <span class="op">==</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">8</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span><span class="op">*</span> left <span class="op">=</span> eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span><span class="op">*</span> right <span class="op">=</span> eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cons<span class="op">(</span>left<span class="op">,</span> right<span class="op">);</span></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>func <span class="op">==</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)</span><span class="dv">9</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> evalargs<span class="op">(</span>args<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The evaluator can evaluate first-class procedures but, these are only built-in procedures. The language still doesn’t have any means of creating abstraction.</p>
+<h2 id="lambda"><code>lambda</code></h2>
+<p><code>lambda</code> creates a procedure. <code>lambda</code> is like something of the following,</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode scheme"><code class="sourceCode scheme"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">;; (lambda (&lt;arglist&gt;) &lt;body&gt;) =&gt; &lt;#lambda&gt;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">;;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">;; where &lt;arg&gt; &lt;=&gt; exp | NONE</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">;; where &lt;body&gt; &lt;=&gt; exp | &lt;body&gt;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">;; where &lt;arglist&gt; &lt;=&gt; &lt;arg&gt; | &lt;arglist&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">;; so that,</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>(<span class="kw">lambda</span> () (<span class="op">+</span> <span class="dv">1</span> <span class="dv">2</span>)) <span class="op">=&gt;</span> <span class="op">&lt;</span>#lambda&gt;</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>((<span class="kw">lambda</span> () (<span class="op">+</span> <span class="dv">1</span> <span class="dv">2</span>))) <span class="op">=&gt;</span> <span class="dv">3</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>((<span class="kw">lambda</span> (a b) (<span class="op">+</span> a b)) <span class="dv">2</span> <span class="dv">2</span>) <span class="op">=&gt;</span> <span class="dv">4</span></span></code></pre></div>
+<p><code>lambda</code> is an object that abstracts imperative knowledge within a language. It can be constructed from it’s parameters, body and, enclosing environment.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> lambda<span class="op">(</span>Text<span class="op">*</span> args<span class="op">,</span> Text<span class="op">*</span> body<span class="op">,</span> <span class="dt">void</span><span class="op">*</span> env<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> cons<span class="op">(</span>env<span class="op">,</span> cons<span class="op">(</span>args<span class="op">,</span> body<span class="op">));</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> eval_exp<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">,</span> Env<span class="op">*</span> env<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>istext<span class="op">(</span>exp<span class="op">)</span> <span class="op">||</span> islist<span class="op">(</span>exp<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    Text<span class="op">*</span> text <span class="op">=</span> exp<span class="op">;</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span>text<span class="op">-&gt;</span>car<span class="op">,</span> <span class="st">&quot;lambda&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> lambda<span class="op">((</span>Text<span class="op">*)</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">,</span> text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>cdr<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> isdigit<span class="op">(*((</span><span class="dt">char</span><span class="op">*)</span>exp<span class="op">))</span> <span class="op">||</span> strcmp<span class="op">(</span>exp<span class="op">,</span> <span class="st">&quot;#f&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">||</span> strcmp<span class="op">(</span>exp<span class="op">,</span> <span class="st">&quot;#t&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">?</span> exp <span class="op">:</span> get<span class="op">(</span>exp<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The lisp syntax makes it easy to pick this information out and create a lambda object. <code>lambda</code> contains an environment as the first element in it’s object and, requires a modification to <code>put</code> to be copied into the environment.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> isenv<span class="op">(</span><span class="dt">void</span><span class="op">*</span> x<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> x <span class="op">&gt;=</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)&amp;</span>frame <span class="op">&amp;&amp;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>         x <span class="op">&lt;</span>  <span class="op">(</span><span class="dt">void</span><span class="op">*)&amp;</span>frame<span class="op">[</span><span class="dv">128</span><span class="op">]</span> <span class="op">||</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>         x <span class="op">==</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)&amp;</span>global<span class="op">;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> cpylambda<span class="op">(</span>Pair<span class="op">*</span> val<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  Pair<span class="op">*</span> lambda <span class="op">=</span> val<span class="op">-&gt;</span>cdr<span class="op">;</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  lambda<span class="op">-&gt;</span>car <span class="op">=</span> lambda<span class="op">-&gt;</span>car <span class="op">?</span> cpy<span class="op">(</span>lambda<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">:</span> NULL<span class="op">;</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  lambda<span class="op">-&gt;</span>cdr <span class="op">=</span> cpy<span class="op">(</span>lambda<span class="op">-&gt;</span>cdr<span class="op">);</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> val<span class="op">;</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> put<span class="op">(</span><span class="dt">void</span><span class="op">*</span> sym<span class="op">,</span> <span class="dt">void</span><span class="op">*</span> val<span class="op">,</span> Env<span class="op">*</span> env<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  strcpy<span class="op">(</span>env<span class="op">-&gt;</span>entryptr<span class="op">-&gt;</span>sym<span class="op">,</span> sym<span class="op">);</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>istext<span class="op">(</span>val<span class="op">)</span> <span class="op">||</span> islist<span class="op">(</span>val<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    Pair<span class="op">*</span> pair <span class="op">=</span> val<span class="op">;</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>isenv<span class="op">(</span>pair<span class="op">-&gt;</span>car<span class="op">))</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>      env<span class="op">-&gt;</span>entryptr<span class="op">-&gt;</span>val <span class="op">=</span> cpylambda<span class="op">(</span>val<span class="op">);</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>      env<span class="op">-&gt;</span>entryptr<span class="op">-&gt;</span>val <span class="op">=</span> cpy<span class="op">(</span>val<span class="op">);</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    env<span class="op">-&gt;</span>entryptr<span class="op">-&gt;</span>val <span class="op">=</span> cpysym<span class="op">(</span>val<span class="op">);</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  env<span class="op">-&gt;</span>entryptr<span class="op">++;</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Finally, <code>apply</code> needs to know how to bind values to the parameters of a <code>lambda</code> closure and, evaluate it’s body in that closure.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> evalbody<span class="op">(</span>Text<span class="op">*</span> body<span class="op">,</span> Env<span class="op">*</span> env<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">void</span><span class="op">*</span> val <span class="op">=</span> eval_exp<span class="op">(</span>body<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>body<span class="op">-&gt;</span>cdr<span class="op">)</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> evalbody<span class="op">(</span>body<span class="op">-&gt;</span>cdr<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> val<span class="op">;</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> parameterize<span class="op">(</span>Text<span class="op">*</span> args<span class="op">,</span> Text<span class="op">*</span> para<span class="op">,</span> Env<span class="op">*</span> env<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  put<span class="op">(</span>para<span class="op">-&gt;</span>car<span class="op">,</span> args<span class="op">-&gt;</span>car<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>args<span class="op">-&gt;</span>cdr <span class="op">!=</span> NULL<span class="op">)</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    parameterize<span class="op">(</span>args<span class="op">-&gt;</span>cdr<span class="op">,</span> para<span class="op">-&gt;</span>cdr<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> apply<span class="op">(</span><span class="dt">void</span><span class="op">*</span> func<span class="op">,</span> Text<span class="op">*</span> args<span class="op">,</span> Env<span class="op">*</span> env<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>islist<span class="op">(</span>func<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    Pair<span class="op">*</span> pair <span class="op">=</span> func<span class="op">;</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    Env<span class="op">*</span> closure <span class="op">=</span> pair<span class="op">-&gt;</span>car<span class="op">;</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    Pair<span class="op">*</span> lambda <span class="op">=</span> pair<span class="op">-&gt;</span>cdr<span class="op">;</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    Text<span class="op">*</span> para <span class="op">=</span> lambda<span class="op">-&gt;</span>car<span class="op">;</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    Text<span class="op">*</span> body <span class="op">=</span> lambda<span class="op">-&gt;</span>cdr<span class="op">;</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    Env<span class="op">*</span> lambdaenv <span class="op">=</span> extend<span class="op">(</span>closure<span class="op">);</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>para<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>      Text<span class="op">*</span> evargs <span class="op">=</span> evalargs<span class="op">(</span>args<span class="op">,</span> env<span class="op">);</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>      parameterize<span class="op">(</span>evargs<span class="op">,</span> para<span class="op">,</span> lambdaenv<span class="op">);</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> evalbody<span class="op">(</span>body<span class="op">,</span> lambdaenv<span class="op">);</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>    <span class="co">// apply a built-in procedure.</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Notice that <code>parameterize</code> copies it’s value when setting up the closure. This is called pass-by-value. This isn’t the only way to evaluate procedures but, it works well for this language.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>These are the essentials of interpretation in C. There are still many more improvements that can be made to this evaluator. For example, there’s no garbage collection for the language and, the evaluator itself needs garbage collection or tail-call optimization to evaluate many procedure applications. In this article we went over procedures as a means of abstracting imperative knowledge but, macros are also a means of abstracting imperative knowledge. But, that’s beyond the scope of these articles.</p>
+<p>The gist contains a full source code listing as well as some additional changes to the printer for <code>lambda</code>. The Github repository contains a slightly different lisp based on the one presented in the articles.</p>
+<h1 id="further-reading">Further Reading</h1>
+<p><a href="https://gist.github.com/swatson555/48ef4ed4b5eed32adb0c44c24b1d347e">Github Gist</a></p>
+<p><a href="https://github.com/swatson555/lisp">Git Repository</a></p>
+
+</article>
+<section>
+<h2>Reader Comments</h2>
+<div id="disqus_thread"></div>
+<script>
+  var disqus_config = function () {
+      this.page.url = "https://swatson555.github.io/posts/2022-06-11-make-a-lisp-4.html";
+      this.page.identifier = "Roll A Lisp In C - Procedures";
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+      var d = document, s = d.createElement('script');
+      s.src = 'https://swatson555.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+<footer>
+</footer>
+</body>
+</html>

@@ -7,8 +7,16 @@
         <description><![CDATA[This is the homepage and blog of Steven Watson.]]></description>
         <atom:link href="https://swatson555.github.io//rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Sat, 04 Jun 2022 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Sat, 11 Jun 2022 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Roll A Lisp In C - Procedures</title>
+    <link>https://swatson555.github.io//posts/2022-06-11-make-a-lisp-4.html</link>
+    <description><![CDATA[]]></description>
+    <pubDate>Sat, 11 Jun 2022 00:00:00 UT</pubDate>
+    <guid>https://swatson555.github.io//posts/2022-06-11-make-a-lisp-4.html</guid>
+    <dc:creator>Steven Watson</dc:creator>
+</item>
+<item>
     <title>Roll A Lisp In C - Environments</title>
     <link>https://swatson555.github.io//posts/2022-06-04-make-a-lisp-3.html</link>
     <description><![CDATA[]]></description>
