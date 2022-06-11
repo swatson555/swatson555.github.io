@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="description" content="Environments store values that can be referred to in later evaluations. In this article I show a technique for storing lisp data for use in later expressions.">
+
+<title>Roll A Lisp In C - Environments</title>
+<link href="../css/syntax.css" rel="stylesheet">
+<link href="../css/style.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Noto+Sans|Noto+Serif" rel="stylesheet">
+</head>
+<body>
+<nav class="header">
+<span><a href="../" target="_self"><h1>Steven Watson's<br>Personal Journal</h1></a></span>
+<ul>
+<li><a href="https://github.com/swatson555/" target="_self"><span>repos</span></a></li>
+</ul>
+</nav>
+<article>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<header>
+<h1>Roll A Lisp In C - Environments</h1>
+<time datetime="2022-06-04">June 04, 2022</time>
+
+<p>Environments store values that can be referred to in later evaluations. In this article I show a technique for storing lisp data for use in later expressions.</p>
+
+<hr>
+</header>
+    <nav>
+        <h2>Table of Contents</h2>
+        <ul>
+        <li><a href="#environments">Environments</a></li>
+        <li><a href="#list-structured-memory">List Structured Memory</a></li>
+        <li><a href="#conclusion">Conclusion</a></li>
+        <li><a href="#further-reading">Further Reading</a></li>
+        </ul>
+    </nav>
+<h3 id="roll-a-lisp-in-c">Roll A Lisp In C</h3>
+<ul>
+<li><a href="2020-01-18-make-a-lisp-1.html">Reading</a></li>
+<li><a href="2022-05-06-make-a-lisp-2.html">Evaluation</a></li>
+<li><a href="2022-06-04-make-a-lisp-3.html"><strong>Environments</strong></a></li>
+<li>Procedures</li>
+</ul>
+<p>In the previous article we went over a simple evaluator that can produce values. With a language that can produce values from evaluation comes the question of storing values.</p>
+<h1 id="environments">Environments</h1>
+<p>The environment presented in this article will be simple mapping from symbols to values.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">char</span> sym<span class="op">[</span><span class="dv">32</span><span class="op">];</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">void</span><span class="op">*</span> val<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> Entry<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>Entry entry<span class="op">[</span><span class="dv">32</span><span class="op">];</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>Entry<span class="op">*</span> entryptr <span class="op">=</span> entry<span class="op">;</span></span></code></pre></div>
+<p>Here we have 32 entries. An entry is a symbol and a value pair. The environment structure has 2 operations <code>put</code> and <code>get</code> for storing and retrieving values.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> symbol<span class="op">[</span><span class="dv">2048</span><span class="op">];</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span><span class="op">*</span> symbolptr <span class="op">=</span> symbol<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> cpysym<span class="op">(</span><span class="dt">void</span><span class="op">*</span> sym<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>sym<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    sym <span class="op">=</span> strcpy<span class="op">(</span>symbolptr<span class="op">,</span> sym<span class="op">);</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    symbolptr <span class="op">=</span> symbolptr <span class="op">+</span> strlen<span class="op">(</span>sym<span class="op">)</span> <span class="op">+</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> sym<span class="op">;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> put<span class="op">(</span><span class="dt">void</span><span class="op">*</span> sym<span class="op">,</span> <span class="dt">void</span><span class="op">*</span> val<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  strcpy<span class="op">(</span>entryptr<span class="op">-&gt;</span>sym<span class="op">,</span> sym<span class="op">);</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  entryptr<span class="op">-&gt;</span>val <span class="op">=</span> cpysym<span class="op">(</span>val<span class="op">);</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  entryptr<span class="op">++;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> get<span class="op">(</span><span class="dt">void</span><span class="op">*</span> sym<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  Entry<span class="op">*</span> seek <span class="op">=</span> entryptr<span class="op">;</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(;</span>seek <span class="op">!=</span> entry<span class="op">-</span><span class="dv">1</span><span class="op">;</span> <span class="op">--</span>seek<span class="op">)</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span>seek<span class="op">-&gt;</span>sym<span class="op">,</span> sym<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> seek<span class="op">-&gt;</span>val<span class="op">;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>For now, the only values the environment will store are symbols. With this we can implement a new language feature to our lisp, <code>define</code>.</p>
+<h2 id="define"><code>define</code></h2>
+<p><code>define</code> creates a variable with a value. <code>define</code> is like something of the following,</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode scheme"><code class="sourceCode scheme"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">;; (define &lt;var&gt; &lt;val&gt;) =&gt; &lt;var&gt;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">;;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">;; where &lt;var&gt; &lt;=&gt; &lt;symbol&gt;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">;; where &lt;val&gt; &lt;=&gt; exp | Integer | Boolean</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">;; so that,</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>(<span class="ex">define</span><span class="fu"> a </span><span class="dv">10</span>) <span class="op">=&gt;</span> a</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>(<span class="ex">define</span><span class="fu"> b </span>a) <span class="op">=&gt;</span> b</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>a <span class="op">=&gt;</span> <span class="dv">10</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>b <span class="op">=&gt;</span> <span class="dv">10</span></span></code></pre></div>
+<p>Implementing this in the evaluator can be done like this,</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> eval_exp<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>istext<span class="op">(</span>exp<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    Text<span class="op">*</span> text <span class="op">=</span> exp<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span><span class="st">&quot;define&quot;</span><span class="op">,</span> text<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> var <span class="op">=</span> text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> val <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>      put<span class="op">(</span>var<span class="op">,</span> val<span class="op">);</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> var<span class="op">;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> isdigit<span class="op">(*((</span><span class="dt">char</span><span class="op">*)</span>exp<span class="op">))</span> <span class="op">||</span> strcmp<span class="op">(</span>exp<span class="op">,</span> <span class="st">&quot;#t&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">||</span> strcmp<span class="op">(</span>exp<span class="op">,</span> <span class="st">&quot;#f&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">?</span> exp <span class="op">:</span> get<span class="op">(</span>exp<span class="op">);</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>We now have a syntactic form <code>define</code> that can create variables that hold values. Notice that to retrieve a value from a variable we evaluate the variable. Our language no longer has the ability to evaluate program text to itself. A feature often referred to as autoquote.</p>
+<p>And yet, we still do autoquote somethings like numbers and booleans. But, you could imagine a lisp where knowledge of these things are in the environment. A language where <code>get</code> already knows about numbers and booleans. You could also imagine a language where we still have autoquoting of text and, <code>get</code> is a syntactic form in our language like <code>define</code> is to <code>put</code>.</p>
+<p>These things are easy to implement in this evaluator and, I encourage trying to implement them.</p>
+<h1 id="list-structured-memory">List Structured Memory</h1>
+<p>A common feature of most lisps is to be able to work with list structured data. In fact, we’ve already seen list structured memory used for the reader. But, now we’ll implement list structured memory for the environment.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>Pair list<span class="op">[</span><span class="dv">1280</span><span class="op">];</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>Pair<span class="op">*</span> listptr <span class="op">=</span> list<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> islist<span class="op">(</span><span class="dt">void</span><span class="op">*</span> x<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> x <span class="op">&gt;=</span> <span class="op">(</span><span class="dt">void</span><span class="op">*)&amp;</span>list <span class="op">&amp;&amp;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>         x <span class="op">&lt;</span>  <span class="op">(</span><span class="dt">void</span><span class="op">*)&amp;</span>list<span class="op">[</span><span class="dv">1280</span><span class="op">];</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>Pair<span class="op">*</span> cons<span class="op">(</span><span class="dt">void</span><span class="op">*</span> x<span class="op">,</span> <span class="dt">void</span><span class="op">*</span> y<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  assert<span class="op">(</span>islist<span class="op">(</span>listptr<span class="op">));</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  listptr<span class="op">-&gt;</span>car <span class="op">=</span> x<span class="op">;</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  listptr<span class="op">-&gt;</span>cdr <span class="op">=</span> y<span class="op">;</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> listptr<span class="op">++;</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This should be familiar. It’s exactly like the list structured data for the reader. But, now we can augment <code>put</code> to accept symbols or lists.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> cpy<span class="op">(</span>Text<span class="op">*</span> text<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>istext<span class="op">(</span>text<span class="op">)</span> <span class="op">||</span> islist<span class="op">(</span>text<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span><span class="op">(</span>istext<span class="op">(</span>text<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">||</span> islist<span class="op">(</span>text<span class="op">-&gt;</span>car<span class="op">))</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> cons<span class="op">(</span>cpy<span class="op">((</span>Text<span class="op">*)</span>text<span class="op">-&gt;</span>car<span class="op">),</span> text<span class="op">-&gt;</span>cdr <span class="op">?</span> cpy<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">)</span> <span class="op">:</span> NULL<span class="op">);</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> cons<span class="op">(</span>cpysym<span class="op">(</span>text<span class="op">-&gt;</span>car<span class="op">),</span> text<span class="op">-&gt;</span>cdr <span class="op">?</span> cpy<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">)</span> <span class="op">:</span> NULL<span class="op">);</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> cpysym<span class="op">(</span>text<span class="op">);</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> put<span class="op">(</span><span class="dt">void</span><span class="op">*</span> sym<span class="op">,</span> <span class="dt">void</span><span class="op">*</span> val<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  strcpy<span class="op">(</span>entryptr<span class="op">-&gt;</span>sym<span class="op">,</span> sym<span class="op">);</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>islist<span class="op">(</span>val<span class="op">)</span> <span class="op">||</span> istext<span class="op">(</span>val<span class="op">))</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    entryptr<span class="op">-&gt;</span>val <span class="op">=</span> cpy<span class="op">(</span>val<span class="op">);</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    entryptr<span class="op">-&gt;</span>val <span class="op">=</span> cpysym<span class="op">(</span>val<span class="op">);</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  entryptr<span class="op">++;</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>It’s important to consider the difference between creating a variable by reference and creating a variable by value. Here we’re creating a variable by it’s value. But, we could also create a variable by not copying the value and just setting the value to be a reference. But, what happens if that reference goes away?</p>
+<p>In this evaluator, references are held in the reader and in <code>ret</code>. This evaluator can be augmented to create variables by reference. It’s a slight optimization over copying and, I encourage trying to implement it.</p>
+<h2 id="cons-car-cdr"><code>cons</code>, <code>car</code> &amp;, <code>cdr</code></h2>
+<p><code>cons</code> creates a pair and, <code>car</code> &amp; <code>cdr</code> retrieve the first and second of a pair. These are something like the following,</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode scheme"><code class="sourceCode scheme"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">;; (cons &lt;val&gt; &lt;val&gt;) =&gt; &lt;pair&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">;;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">;; so that,</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>(<span class="kw">cons</span> <span class="dv">12</span> <span class="dv">10</span>) <span class="op">=&gt;</span> (<span class="dv">12</span> <span class="op">.</span> <span class="dv">10</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>(<span class="kw">cons</span> <span class="dv">#t</span> <span class="dv">3</span>) <span class="op">=&gt;</span> (<span class="dv">#t</span> <span class="op">.</span> <span class="dv">3</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode scheme"><code class="sourceCode scheme"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">;; (car &lt;pair&gt;) =&gt; &lt;val&gt;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">;;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">;; so that,</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>(<span class="kw">car</span> (<span class="kw">cons</span> <span class="dv">12</span> <span class="dv">10</span>)) <span class="op">=&gt;</span> <span class="dv">12</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>(<span class="kw">car</span> (<span class="kw">cons</span> <span class="dv">#t</span> <span class="dv">3</span>)) <span class="op">=&gt;</span> <span class="dv">#t</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode scheme"><code class="sourceCode scheme"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">;; (cdr &lt;pair&gt;) =&gt; &lt;val&gt;</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co">;;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co">;; so that,</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>(<span class="kw">cdr</span> (<span class="kw">cons</span> <span class="dv">12</span> <span class="dv">10</span>)) <span class="op">=&gt;</span> <span class="dv">10</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>(<span class="kw">cdr</span> (<span class="kw">cons</span> <span class="dv">#t</span> <span class="dv">3</span>)) <span class="op">=&gt;</span> <span class="dv">3</span></span></code></pre></div>
+<p>Implementing this in the evaluator can be done like this,</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> eval_exp<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">char</span> ret<span class="op">[</span><span class="dv">32</span><span class="op">];</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>istext<span class="op">(</span>exp<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    Text<span class="op">*</span> text <span class="op">=</span> exp<span class="op">;</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span><span class="st">&quot;cons&quot;</span><span class="op">,</span> text<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> left <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">void</span><span class="op">*</span> right <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> cons<span class="op">(</span>left<span class="op">,</span> right<span class="op">);</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span><span class="st">&quot;car&quot;</span><span class="op">,</span> text<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>      Pair<span class="op">*</span> pair <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> pair<span class="op">-&gt;</span>car<span class="op">;</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span><span class="st">&quot;cdr&quot;</span><span class="op">,</span> text<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>      Pair<span class="op">*</span> pair <span class="op">=</span> eval_exp<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">);</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> pair<span class="op">-&gt;</span>cdr<span class="op">;</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> isdigit<span class="op">(*((</span><span class="dt">char</span><span class="op">*)</span>exp<span class="op">))</span> <span class="op">||</span> strcmp<span class="op">(</span>exp<span class="op">,</span> <span class="st">&quot;#t&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">||</span> strcmp<span class="op">(</span>exp<span class="op">,</span> <span class="st">&quot;#f&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">?</span> exp <span class="op">:</span> get<span class="op">(</span>exp<span class="op">);</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>But, if you tried running the evaluator now and used <code>cons</code> in the repl it would probably segfault. The reason being that the printer doesn’t know how to display pairs.</p>
+<p>This isn’t the only way of working with list structured data. Lisp’s syntax is itself made from lists and, this homoiconic quality can be used to make lists as well.</p>
+<h2 id="quote"><code>quote</code></h2>
+<p><code>quote</code> evaluates to the text of it’s application. In other words it returns a list or a symbol of the text passed to it. <code>quote</code> is like the following,</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode scheme"><code class="sourceCode scheme"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">;; (quote &lt;exp&gt;) =&gt; &lt;exp&gt;</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co">;;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">;; so that,</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>(<span class="kw">quote</span> (<span class="kw">cons</span> <span class="dv">12</span> <span class="dv">10</span>)) <span class="op">=&gt;</span> (<span class="kw">cons</span> <span class="dv">12</span> <span class="dv">10</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>(<span class="kw">quote</span> (<span class="kw">cons</span> <span class="dv">#t</span> <span class="dv">3</span>)) <span class="op">=&gt;</span> (<span class="kw">cons</span> <span class="dv">#t</span> <span class="dv">3</span>)</span></code></pre></div>
+<p>Implementing this in the evaluator can be done like this,</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> eval_exp<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>istext<span class="op">(</span>exp<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    Text<span class="op">*</span> text <span class="op">=</span> exp<span class="op">;</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span><span class="st">&quot;quote&quot;</span><span class="op">,</span> text<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> text<span class="op">-&gt;</span>cdr<span class="op">-&gt;</span>car<span class="op">;</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> isdigit<span class="op">(*((</span><span class="dt">char</span><span class="op">*)</span>exp<span class="op">))</span> <span class="op">||</span> strcmp<span class="op">(</span>exp<span class="op">,</span> <span class="st">&quot;#t&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">||</span> strcmp<span class="op">(</span>exp<span class="op">,</span> <span class="st">&quot;#f&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">?</span> exp <span class="op">:</span> get<span class="op">(</span>exp<span class="op">);</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>There’s another way of making lists and, that’s a <code>list</code> syntactic form.</p>
+<h2 id="list"><code>list</code></h2>
+<p><code>list</code> creates a list from it’s arguments. <code>list</code> is like something of the following,</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode scheme"><code class="sourceCode scheme"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">;; (list &lt;vals&gt;) =&gt; &lt;vals&gt;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co">;;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">;; where &lt;vals&gt; &lt;=&gt; &lt;vals&gt; | &lt;val&gt;</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co">;; so that,</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>(<span class="kw">list</span> <span class="dv">1</span> <span class="dv">2</span> <span class="dv">3</span>) <span class="op">=&gt;</span> (<span class="dv">1</span> <span class="dv">2</span> <span class="dv">3</span>)</span></code></pre></div>
+<p>Implementing this in the evaluator can be done like this,</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> evalargs<span class="op">(</span>Text<span class="op">*</span> args<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> cons<span class="op">(</span>eval_exp<span class="op">(</span>args<span class="op">-&gt;</span>car<span class="op">),</span> args<span class="op">-&gt;</span>cdr <span class="op">?</span> evalargs<span class="op">(</span>args<span class="op">-&gt;</span>cdr<span class="op">)</span> <span class="op">:</span> NULL<span class="op">);</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> eval_exp<span class="op">(</span><span class="dt">void</span><span class="op">*</span> exp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">char</span> ret<span class="op">[</span><span class="dv">32</span><span class="op">];</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>istext<span class="op">(</span>exp<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    Text<span class="op">*</span> text <span class="op">=</span> exp<span class="op">;</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>strcmp<span class="op">(</span><span class="st">&quot;list&quot;</span><span class="op">,</span> text<span class="op">-&gt;</span>car<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> evalargs<span class="op">(</span>text<span class="op">-&gt;</span>cdr<span class="op">)</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> isdigit<span class="op">(*((</span><span class="dt">char</span><span class="op">*)</span>exp<span class="op">))</span> <span class="op">||</span> strcmp<span class="op">(</span>exp<span class="op">,</span> <span class="st">&quot;#t&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">||</span> strcmp<span class="op">(</span>exp<span class="op">,</span> <span class="st">&quot;#f&quot;</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">?</span> exp <span class="op">:</span> get<span class="op">(</span>exp<span class="op">);</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Notice that <code>list</code> evaluates it’s arguments to create a list. It looks just like a procedure. It’s useful to consider a variant of <code>list</code> which doesn’t evaluate it’s arguments. A <code>list</code> which is like a variadic <code>quote</code>. That’s not hard to implement in this evaluator. Could you write a <code>list</code> procedure like that in terms of <code>cons</code>, <code>car</code> and, <code>cdr</code>?</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>In this evaluator we’ve added quite a few new features. We’ve shown a simple environment data structure that maps symbols to values. We’ve shown a way of working with and creating list structured data. We’ve seen that this evaluator is flexible and, is useful for studying other language concepts with. But, we’ve only been using syntactic forms to implement features. In the next and final article it’s shown a technique for implementing first-class lexically scoped procedures.</p>
+<p>In the gist is a full source code listing which also contains code for a reader and printer that can use the features we’ve added to this language. The gist also contains an implementation of <code>=</code> that works with lists and the empty list.</p>
+<h1 id="further-reading">Further Reading</h1>
+<p><a href="https://gist.github.com/swatson555/13da367e38bcb3feb344aa2c5f5ae36b">Github Gist</a></p>
+
+</article>
+<section>
+<h2>Reader Comments</h2>
+<div id="disqus_thread"></div>
+<script>
+  var disqus_config = function () {
+      this.page.url = "https://swatson555.github.io/posts/2022-06-04-make-a-lisp-3.html";
+      this.page.identifier = "Roll A Lisp In C - Environments";
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+      var d = document, s = d.createElement('script');
+      s.src = 'https://swatson555.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+<footer>
+</footer>
+</body>
+</html>

@@ -37,7 +37,13 @@
         <li><a href="#further-reading">Further Reading</a></li>
         </ul>
     </nav>
-</header>
+<h3 id="roll-a-lisp-in-c">Roll A Lisp In C</h3>
+<ul>
+<li><a href="2020-01-18-make-a-lisp-1.html"><strong>Reading</strong></a></li>
+<li><a href="2022-05-06-make-a-lisp-2.html">Evaluation</a></li>
+<li><a href="2022-06-04-make-a-lisp-3.html">Environments</a></li>
+<li>Procedures</li>
+</ul>
 <p>A Lisp interpreter can be thought of as having 3 distinct parts. The Lisp reader, which takes a character string representation of a program and loads it into data for evaluation. The Lisp evaluator, which can compute an expression. The Lisp printer, which can take data and create a character string representation for displaying to a console. So, the first step is to create the Lisp reader so that we can have expressions to evaluate.</p>
 <h1 id="reader">Reader</h1>
 <p>The Lisp reader is essentially just a parser. So, we should have a way to lexically analyze the input string. Which is to say we want to turn a string representation of our expression into a series of tokens. Thankfully, Lisp is quite simple to lexically analyze. The only tokens we care about are parenthesis and symbols.</p>
