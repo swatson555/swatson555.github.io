@@ -1,0 +1,15 @@
+if ((typeof(ZX0IjPO5PWy7g2eOQ8J6zb$3ml$3yacc$3lib$0stream$1)) == "undefined") {ZX0IjPO5PWy7g2eOQ8J6zb$3ml$3yacc$3lib$0stream$1 = {};
+};
+(function(){ZX0IjPO5PWy7g2eOQ8J6zb$3ml$3yacc$3lib$0stream$1.get$57 = function(v$60){switch (v$60[0][0]) { case 1: {return v$60[0][1];
+ break; }default: {var v$73 = v$60[0][1];
+var t$70 = [v$73(0),[[0,v$73]]];
+(v$60[0] = [1,t$70],0);
+return t$70;
+} };
+};
+ZX0IjPO5PWy7g2eOQ8J6zb$3ml$3yacc$3lib$0stream$1.streamify$74 = function(f$77){return [[0,f$77]];
+};
+ZX0IjPO5PWy7g2eOQ8J6zb$3ml$3yacc$3lib$0stream$1.cons$78 = function(v$114,v$115){return [[1,[v$115,v$114]]];
+};
+return 0;
+})();
